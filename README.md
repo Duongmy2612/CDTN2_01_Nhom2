@@ -65,7 +65,7 @@ Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05; 06 (
 ```bash
 pytest backend/tests -q
 ```
-18 ca kiểm thử chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
+80 ca kiểm thử (6 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
 (`pytest.ini` ở thư mục gốc đã khai báo `pythonpath = .` nên chạy thẳng lệnh trên, không cần cài gói):
 đủ 20 API, định dạng lỗi, quy tắc làm sạch R1–R9 trên file có lỗi (UserId trống, Score sai, Text rỗng, bản ghi trùng),
 pipeline 7 bước, mọi API trả dữ liệu đúng lược đồ, kiểm tra theo thời gian (giai đoạn học trước giai đoạn kiểm tra),
@@ -75,9 +75,18 @@ dự đoán, cách chọn đánh giá bằng chứng gửi Gemini, PDF/CSV,
 trợ lý AI ở chế độ quy tắc và chế độ Gemini (máy chủ Gemini giả lập `backend/tests/fake_gemini.py`: gọi công cụ, tự chuyển model khi 404,
 loại nguyên nhân có bằng chứng không tồn tại, gọi lại khi giải pháp thiếu ý, khóa sai → suy giảm có kiểm soát),
 chạy trợ lý AI hàng loạt và tính điểm NFR-10, các ca kiểm thử chấp nhận FR Must của `scripts/acceptance_test.py`.
+Từ bản 1.4.0 thêm kiểm thử tích hợp (buổi 7): `test_frontend_contract.py` đọc mã React và đối chiếu với hợp đồng API
+(đường dẫn, tên tham số, trường thân yêu cầu, giới hạn page_size, tên biểu đồ, tên bảng CSV – 43 ca sinh theo từng lời gọi
+trong giao diện); `test_integration.py` kiểm tra cùng một con số giống nhau trên mọi màn hình; `test_predict_topics.py`,
+`test_smoke_partial.py` cho các sửa đổi của sprint xây dựng 2; `test_acceptance.py` chạy kiểm thử chấp nhận FR Must (buổi 6).
 Kiểm thử không bao giờ dùng khóa thật trong `backend/.env` (conftest đặt khóa rỗng trước khi nạp ứng dụng).
-CI trên GitHub (`.github/workflows/ci.yml`) chạy lại `pytest` và `npm run build` mỗi lần đẩy code hoặc mở pull request vào
-`main`/`develop`.
+CI trên GitHub (`.github/workflows/ci.yml`) chạy lại `pytest` và `npm run build` mỗi lần mở pull request vào `main`.
+
+**Chạy thử toàn hệ thống và kiểm tra tích hợp (buổi 7)** – khi backend (và frontend) đang chạy:
+```bash
+python scripts/smoke_test.py --base http://localhost:5173        # gọi 27 lời gọi API qua frontend → docs/test_report/smoke_*.md
+python scripts/integration_check.py --base http://localhost:5173 # 17 đối chiếu số liệu giữa các màn hình → integration_*.md
+```
 
 **Kiểm thử chấp nhận FR Must (biên bản kiểm thử):** `python scripts/acceptance_test.py` (bộ mẫu 100.000 dòng, ≈ 3 phút) hoặc
 `--full` (toàn bộ Reviews.csv, ≈ 5 phút). Script tải file qua API trong thư mục tạm (không đụng dữ liệu đang dùng), chạy 14 ca
@@ -86,24 +95,45 @@ kiểm thử cho 14 yêu cầu chức năng mức Must, so mỗi kết quả v�
 
 ## 7. Cấu trúc thư mục
 ```
-backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.3.0)
+backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.4.0)
            services/ data · eda · model · topic · forecast · alert · ai · report · pipeline
            data/ (raw, sample, processed) · models/ · cache/ · tests/
 frontend/  React 18 + Vite 5 + Tailwind 3 + Recharts · src/api/client.js ánh xạ 20 API · src/tabs/ (9 tab)
 notebooks/ 01_eda · 02_model_baseline · 03_topic_baseline · 04_forecast_baseline · 05_risk_rule · 06_topic_e_t2 (+ figures/, outputs/)
 docs/      openapi.json · schema_sqlite.sql · erd.png · wireframes/ · screens/ · test_report/ (biên bản kiểm thử) · demo/ (kịch bản demo) · ai_batch/
-scripts/   make_sample.py · export_openapi.py · acceptance_test.py · run_ai_batch.py · nfr10_score.py
+scripts/   make_sample.py · export_openapi.py · acceptance_test.py · run_ai_batch.py · nfr10_score.py · smoke_test.py · integration_check.py
 .github/   workflows/ci.yml (pytest + build) · pull_request_template.md (danh sách kiểm tra DoD)
 ```
 
 ## 8. Quy ước làm việc
-Nhánh `main` / `develop` / `feature/PB-xx-ten-ngan`; commit bắt đầu bằng mã PB; gộp vào `develop` qua pull request có người
-xem lại và CI xanh; không đưa `backend/.env`, dữ liệu gốc, mô hình đã huấn luyện lên GitHub – chi tiết ở `CONTRIBUTING.md`. Đổi lược đồ API phải tăng `API_CONTRACT_VERSION` và cập nhật `docs/openapi.json`
+Kho chung `https://github.com/Duongmy2612/CDTN2_01_Nhom2`: mỗi thành viên một nhánh (`diemmy`, `kaysone`, `hoangthuan`,
+`giahuy`), commit bằng tài khoản Git của mình theo dạng `loại(phạm vi): mô tả [PB-xx]`, gộp vào `main` qua pull request khi CI
+xanh; không đưa `backend/.env`, dữ liệu gốc, mô hình đã huấn luyện lên GitHub – chi tiết ở `CONTRIBUTING.md`. Đổi lược đồ API phải tăng `API_CONTRACT_VERSION` và cập nhật `docs/openapi.json`
 (`python scripts/export_openapi.py`).
 Sơ đồ trong tài liệu thiết kế: `python docs/diagrams/erd_build.py` (ERD) và
 `mmdc -i docs/diagrams/seq_upload.mmd -o docs/seq_upload.png -c docs/diagrams/mmd_config.json -s 2` (tương tự cho seq_predict).
 
-## 9. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
+## 9. Thay đổi phiên bản 1.4.0 (sprint xây dựng 2 – buổi 7: tích hợp các mô-đun)
+Hợp đồng API 1.3.0 → 1.4.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại. Nhóm chạy cả
+luồng trên bộ mẫu, đối chiếu cùng một con số trên mọi màn hình (`scripts/integration_check.py`): bản 1.3.0 khớp 13/17,
+lệch ở 4 chỗ dưới đây; bản 1.4.0 khớp 17/17.
+- **Tự nhập dự đoán kèm mã sản phẩm (PB-06 – KAYSONE Souk Anong):** trước đây backend bỏ qua mã sản phẩm, giao diện vẫn hiện nút
+  “Xem sản phẩm” kể cả với mã không có → ngăn chi tiết toàn lỗi 404. Nay mã được chuẩn hóa như API #13, #15, #16; có mã → API #14
+  trả `product` (số đánh giá, điểm TB, chỉ số hài lòng, mức rủi ro – cùng số với tab Sản phẩm) và giao diện so sánh với đánh giá
+  vừa nhập; không có mã → vẫn dự đoán, ghi chú rõ, không mở ngăn chi tiết.
+- **Chủ đề phàn nàn (PB-07 – KAYSONE Souk Anong):** API #9 trả `n_unassigned` (đánh giá tiêu cực không chứa từ nào trong từ điển
+  NMF) để tổng các chủ đề + phần chưa xếp đúng bằng số đánh giá tiêu cực ở Tổng quan, Phân tích.
+- **Tháng chưa trọn (PB-08 – Nguyễn Hoàng Thuận):** biểu đồ theo tháng của tab Phân tích có trường `partial`, vẽ cột nhạt và ghi
+  chú cho tháng dữ liệu dừng giữa chừng (10/2012) – tab Tổng quan, Dự báo, cảnh báo đều dừng ở tháng trọn vẹn trước đó.
+- **Docker Compose (PB-17 làm sớm, NFR-08 – Nguyễn Hoàng Thuận):** frontend chỉ chạy khi backend đã trả `/api/health`; bỏ
+  `backend/data` (gắn bằng volume) khỏi ngữ cảnh build. `scripts/smoke_test.py` gọi 27 lời gọi API qua đúng địa chỉ người dùng
+  mở (qua proxy của frontend) và ghi biên bản.
+- **Giao diện gọi đúng API (PB-03 – Lê Gia Huy):** `backend/tests/test_frontend_contract.py` đối chiếu `src/api/client.js` và mọi
+  màn hình với hợp đồng API trong CI; tab Tổng quan ghi rõ “Tháng trọn vẹn gần nhất”; thông báo mất kết nối đúng cả khi chạy Docker.
+- **Kiểm tra tích hợp, quy trình Git (Dương Diễm My):** `scripts/integration_check.py` + `backend/tests/test_integration.py`;
+  chuyển sang kho `CDTN2_01_Nhom2`, mỗi thành viên một nhánh (`CONTRIBUTING.md`, mẫu pull request).
+
+## 10. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
 Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Trợ lý AI – kiểm tra độ đầy đủ của giải pháp (PB-19):** hành động Gemini trả về phải ≥ 8 từ, không kết thúc bằng từ nối
   (“và”, “của”, “dòng”…), chỉ số theo dõi ≥ 4 từ. Thiếu ý → gọi lại 1 lần kèm danh sách giải pháp cần viết lại (tối đa 3 lần gọi
@@ -124,7 +154,7 @@ Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tươn
 - **Kiểm thử chấp nhận FR Must** (`scripts/acceptance_test.py`, mục 6) và **CI GitHub Actions**; quy trình Git trong `CONTRIBUTING.md`;
   `.gitattributes` thống nhất ký tự xuống dòng giữa máy Windows và Linux.
 
-## 10. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
+## 11. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
 Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và bảng xuất mới nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Cảnh báo sản phẩm:** thêm trường `signal` – `decline` (điểm TB 3 tháng giảm ≥ 0,25 sao, tức “bị đánh giá thấp dần”) hoặc
   `negative` (điểm không giảm nhưng tỷ lệ tiêu cực cao kéo dài); lý do ghi rõ loại tín hiệu. Sắp theo mức rủi ro: trong cùng mức,
