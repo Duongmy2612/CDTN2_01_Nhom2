@@ -14,3 +14,10 @@ venv/
 node_modules/
 frontend/dist/
 .ipynb_checkpoints/
+
+# Gia Huy - Frontend build artifacts and secrets
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
