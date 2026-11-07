@@ -59,13 +59,13 @@ cd notebooks
 jupytext --to ipynb 0*_*.py
 jupyter nbconvert --to notebook --execute --inplace 01_eda.ipynb   # lần lượt 01 → 05
 ```
-Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05. Mọi bước dùng `random_state = 42`.
+Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05; 06 (thực nghiệm E-T2 của sprint 1) dùng kết quả của 01. Mọi bước dùng `random_state = 42`.
 
 ## 6. Kiểm thử
 ```bash
 pytest backend/tests -q
 ```
-16 ca kiểm thử chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
+18 ca kiểm thử chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
 (`pytest.ini` ở thư mục gốc đã khai báo `pythonpath = .` nên chạy thẳng lệnh trên, không cần cài gói):
 đủ 20 API, định dạng lỗi, quy tắc làm sạch R1–R9 trên file có lỗi (UserId trống, Score sai, Text rỗng, bản ghi trùng),
 pipeline 7 bước, mọi API trả dữ liệu đúng lược đồ, kiểm tra theo thời gian (giai đoạn học trước giai đoạn kiểm tra),
@@ -73,27 +73,58 @@ sắp xếp cảnh báo (cùng mức: giảm điểm mạnh nhất trước) và
 bộ lọc mâu thuẫn → 422), tải file không dùng được không làm mất dữ liệu đang có, dự báo khi chuỗi có tháng trống,
 dự đoán, cách chọn đánh giá bằng chứng gửi Gemini, PDF/CSV,
 trợ lý AI ở chế độ quy tắc và chế độ Gemini (máy chủ Gemini giả lập `backend/tests/fake_gemini.py`: gọi công cụ, tự chuyển model khi 404,
-loại nguyên nhân có bằng chứng không tồn tại, khóa sai → suy giảm có kiểm soát).
+loại nguyên nhân có bằng chứng không tồn tại, gọi lại khi giải pháp thiếu ý, khóa sai → suy giảm có kiểm soát),
+chạy trợ lý AI hàng loạt và tính điểm NFR-10, các ca kiểm thử chấp nhận FR Must của `scripts/acceptance_test.py`.
+Kiểm thử không bao giờ dùng khóa thật trong `backend/.env` (conftest đặt khóa rỗng trước khi nạp ứng dụng).
+CI trên GitHub (`.github/workflows/ci.yml`) chạy lại `pytest` và `npm run build` mỗi lần đẩy code hoặc mở pull request vào
+`main`/`develop`.
+
+**Kiểm thử chấp nhận FR Must (biên bản kiểm thử):** `python scripts/acceptance_test.py` (bộ mẫu 100.000 dòng, ≈ 3 phút) hoặc
+`--full` (toàn bộ Reviews.csv, ≈ 5 phút). Script tải file qua API trong thư mục tạm (không đụng dữ liệu đang dùng), chạy 14 ca
+kiểm thử cho 14 yêu cầu chức năng mức Must, so mỗi kết quả với phép tính độc lập bằng pandas và ghi biên bản vào
+`docs/test_report/acceptance_<sample|full>_<ngày>.md`.
 
 ## 7. Cấu trúc thư mục
 ```
-backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.2.0)
+backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.3.0)
            services/ data · eda · model · topic · forecast · alert · ai · report · pipeline
            data/ (raw, sample, processed) · models/ · cache/ · tests/
 frontend/  React 18 + Vite 5 + Tailwind 3 + Recharts · src/api/client.js ánh xạ 20 API · src/tabs/ (9 tab)
-notebooks/ 01_eda · 02_model_baseline · 03_topic_baseline · 04_forecast_baseline · 05_risk_rule (+ figures/, outputs/)
-docs/      openapi.json · schema_sqlite.sql · erd.png · wireframes/ · screens/
-scripts/   make_sample.py · export_openapi.py
+notebooks/ 01_eda · 02_model_baseline · 03_topic_baseline · 04_forecast_baseline · 05_risk_rule · 06_topic_e_t2 (+ figures/, outputs/)
+docs/      openapi.json · schema_sqlite.sql · erd.png · wireframes/ · screens/ · test_report/ (biên bản kiểm thử) · demo/ (kịch bản demo) · ai_batch/
+scripts/   make_sample.py · export_openapi.py · acceptance_test.py · run_ai_batch.py · nfr10_score.py
+.github/   workflows/ci.yml (pytest + build) · pull_request_template.md (danh sách kiểm tra DoD)
 ```
 
 ## 8. Quy ước làm việc
-Nhánh `main` / `develop` / `feature/PB-xx-ten-ngan`; commit bắt đầu bằng mã PB; không đưa `backend/.env`, dữ liệu gốc,
-mô hình đã huấn luyện lên GitHub. Đổi lược đồ API phải tăng `API_CONTRACT_VERSION` và cập nhật `docs/openapi.json`
+Nhánh `main` / `develop` / `feature/PB-xx-ten-ngan`; commit bắt đầu bằng mã PB; gộp vào `develop` qua pull request có người
+xem lại và CI xanh; không đưa `backend/.env`, dữ liệu gốc, mô hình đã huấn luyện lên GitHub – chi tiết ở `CONTRIBUTING.md`. Đổi lược đồ API phải tăng `API_CONTRACT_VERSION` và cập nhật `docs/openapi.json`
 (`python scripts/export_openapi.py`).
 Sơ đồ trong tài liệu thiết kế: `python docs/diagrams/erd_build.py` (ERD) và
 `mmdc -i docs/diagrams/seq_upload.mmd -o docs/seq_upload.png -c docs/diagrams/mmd_config.json -s 2` (tương tự cho seq_predict).
 
-## 9. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
+## 9. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
+Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại.
+- **Trợ lý AI – kiểm tra độ đầy đủ của giải pháp (PB-19):** hành động Gemini trả về phải ≥ 8 từ, không kết thúc bằng từ nối
+  (“và”, “của”, “dòng”…), chỉ số theo dõi ≥ 4 từ. Thiếu ý → gọi lại 1 lần kèm danh sách giải pháp cần viết lại (tối đa 3 lần gọi
+  cho một phân tích, tính cả lần sửa lược đồ); vẫn thiếu thì gắn cờ `complete = false`, lý do `problem`, giao diện tô vàng và nhắc
+  “Gọi lại”. Kết quả cũ trong bộ đệm được kiểm tra lại khi đọc. Trường mới của API #17: `n_calls`, `incomplete_actions`.
+- **Chạy trợ lý AI hàng loạt:** `python scripts/run_ai_batch.py [--refresh]` phân tích mọi sản phẩm rủi ro Cao và mọi chủ đề, lưu bộ
+  đệm, kiểm tra lại độc lập từng mã bằng chứng, xuất `docs/ai_batch/ai_batch_<ngày>.md|json` và bảng chấm điểm NFR-10
+  (`nfr10_cham_diem_<ngày>.csv`: 21 sản phẩm chọn ngẫu nhiên + 9 chủ đề). Hai người chấm xong chạy
+  `python scripts/nfr10_score.py <file.csv>` để có tỷ lệ khớp và Cohen's κ.
+- **Bảng so sánh mô hình (PB-05):** thêm Precision, Recall trung bình macro 3 lớp (`prec_macro3`, `rec_macro3` – API #11) cho đủ
+  Accuracy – Precision – Recall – F1-macro – MAE theo tiêu chí chấp nhận của backlog; có trong tab Mô hình, PDF, CSV `model_metrics`.
+- **Thực nghiệm E-T2** (`notebooks/06_topic_e_t2`): bỏ tên nhóm hàng khỏi mô hình chủ đề – NPMI giảm 0,241 → 0,203 (k tốt nhất = 12),
+  độ đa dạng 0,978 → 0,917; chủ đề trải đều hơn theo sản phẩm nhưng ở k = 9 có 3 chủ đề không khớp mẫu tên nào (42,5% đánh giá
+  tiêu cực) → **giữ mô hình hiện tại** theo tiêu chí đã chốt (chỉ thay khi NPMI và độ dễ hiểu đều không giảm).
+- **Demo** (`docs/demo/`): `kich_ban_demo_sprint1.md` (demo nhanh luồng ưu tiên cao, khoảng 5 phút) và `kich_ban_demo_day_du.md`
+  (đủ 10 màn hình, 28 yêu cầu chức năng); ảnh `docs/screens/` chụp lại trên bản 1.3.0, giữ tên file và khung hình 1440 × 900 (1,5×);
+  `swagger.png` dựng từ `docs/openapi.json` bằng Swagger UI chạy cục bộ.
+- **Kiểm thử chấp nhận FR Must** (`scripts/acceptance_test.py`, mục 6) và **CI GitHub Actions**; quy trình Git trong `CONTRIBUTING.md`;
+  `.gitattributes` thống nhất ký tự xuống dòng giữa máy Windows và Linux.
+
+## 10. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
 Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và bảng xuất mới nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Cảnh báo sản phẩm:** thêm trường `signal` – `decline` (điểm TB 3 tháng giảm ≥ 0,25 sao, tức “bị đánh giá thấp dần”) hoặc
   `negative` (điểm không giảm nhưng tỷ lệ tiêu cực cao kéo dài); lý do ghi rõ loại tín hiệu. Sắp theo mức rủi ro: trong cùng mức,
