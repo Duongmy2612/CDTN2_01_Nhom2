@@ -1,0 +1,22 @@
+# Biên bản kiểm thử chấp nhận – yêu cầu chức năng mức Must
+
+- Ngày chạy: 2026-11-03 02:03 · dữ liệu: Reviews.csv (568.454 dòng gốc) · phiên bản ứng dụng 1.3.0
+- Môi trường: Linux x86_64, 2 CPU, Python 3.11.18
+- Kết quả: **14/14 ca đạt** (52 điều kiện kiểm tra)
+
+| Mã ca | Yêu cầu | Nội dung kiểm tra | Kết quả thực tế | Kết quả |
+|---|---|---|---|---|
+| TC-01 | FR-01 | Tải file CSV lên, job nền chạy đủ 7 bước có tiến trình | POST /api/upload → 202, job job_20261103_7605; 7/7 bước xong trong 282 giây; tiến trình tăng dần 0% → 100% | Đạt |
+| TC-02 | FR-02 | File thiếu cột bắt buộc / Score sai / không phải .csv bị từ chối, nêu rõ lỗi, dữ liệu đang dùng giữ nguyên | thiếu cột Text → 400 MISSING_COLUMN “Thiếu cột bắt buộc: Text”; Score ngoài 1–5 ở mọi dòng → 400 INVALID_SCORE; file .xlsx → 415 UNSUPPORTED_TYPE; dữ liệu đang dùng giữ nguyên (cùng dataset_version) | Đạt |
+| TC-03 | FR-03 | Báo cáo chất lượng: số dòng, số dòng trùng, giá trị thiếu, khoảng thời gian, 20 dòng đầu | số dòng 568.454 = pandas 568.454; số dòng trùng 174.562 = pandas 174.562; giá trị thiếu từng cột khớp pandas; khoảng thời gian 1999-10-08 – 2012-10-26; xem trước 20 dòng, không có ProfileName | Đạt |
+| TC-04 | FR-04 | Làm sạch R1 – R9: không còn trùng, rỗng, Helpfulness sai, thẻ HTML; bỏ ProfileName, UserId | 568.454 → 393.890 đánh giá; pandas độc lập 393.890; bỏ trùng 174.562 = pandas 174.562; Helpfulness sai 2 = 2; review_id duy nhất, không còn nội dung rỗng, < 3 từ; không còn thẻ HTML trong nội dung; helpful_num ≤ helpful_den ở mọi dòng; không có cột ProfileName, UserId (thay bằng user_key); chữ thường ở bước vector hóa: “Didn't LIKE” → “did not like” | Đạt |
+| TC-05 | FR-05 | Nhãn cảm xúc đúng quy tắc 1–2 / 3 / 4–5 sao | 393.890/393.890 dòng đúng quy tắc nhãn | Đạt |
+| TC-06 | FR-06 | Lưu reviews_clean.csv; có dữ liệu mẫu dùng ngay | reviews_clean.csv đọc được: 393.890 dòng × 14 cột; dữ liệu mẫu 100.000 dòng có sẵn trên máy chủ (nút “Dùng dữ liệu mẫu”) | Đạt |
+| TC-07 | FR-07 | KPI tổng quan khớp phép tính độc lập bằng pandas | đánh giá 393.890, sản phẩm 67.612, người dùng 256.059 khớp pandas; điểm TB 4,1794 = 4,1794; tỷ lệ tiêu cực 14,50% = 14,50%; F1-macro mô hình 0,712 = mô hình đang chọn; SP rủi ro cao 39 = bảng sản phẩm | Đạt |
+| TC-08 | FR-08 | 5 biểu đồ EDA có dữ liệu, số liệu khớp pandas | 5/5 biểu đồ trả 200 và có dữ liệu; phân bố số sao khớp value_counts(); 10 sản phẩm nhiều đánh giá nhất khớp pandas (đầu bảng B007JFMH8M); tổng số đánh giá theo tháng = 393.890 | Đạt |
+| TC-09 | FR-10 | Mô hình huấn luyện tự động trên dữ liệu đã làm sạch, dùng được để dự đoán | mô hình LR huấn luyện lúc 2026-11-03T02:00:55 trên 393.890 đánh giá đã làm sạch; dự đoán được ngay sau khi xử lý: 5 sao, pos | Đạt |
+| TC-10 | FR-11 | So sánh ≥ 3 mô hình trên cùng tập 80/20: Accuracy, Precision, Recall, F1-macro, MAE, ma trận nhầm lẫn | 3 mô hình + baseline: B0, LR, NB, SVM; cùng tập 80.000 / 20.000 (80/20); đủ Accuracy, Precision, Recall, F1-macro, MAE cho mọi mô hình; ma trận nhầm lẫn 3×3 và 5×5, tổng 20.000 = tập kiểm tra; mô hình chọn LR: F1-macro 0,712 ≥ 0,65; F1 Tiêu cực 0,772; MAE 0,387 | Đạt |
+| TC-11 | FR-14 | Tự nhập đánh giá → số sao, cảm xúc, xác suất, chỉ số hài lòng ≤ 1 giây; < 3 từ bị từ chối | “The coffee arrived stale and the…” → 1 sao, neg, chỉ số 4,0; “It is okay, nothing special but …” → 3 sao, neu, chỉ số 49,9; “Great taste, fresh and crunchy, …” → 5 sao, pos, chỉ số 98,0; thời gian dự đoán lớn nhất 11 ms ≤ 1 giây; “too short” (2 từ) → 422 TEXT_TOO_SHORT | Đạt |
+| TC-12 | FR-18 | ≥ 5 chủ đề phàn nàn, mỗi chủ đề có tên, 10 từ khóa, tỷ trọng, 3 đánh giá mẫu, xu hướng | 9 chủ đề (≥ 5); mỗi chủ đề có tên, 10 từ khóa, tỷ trọng, 3 đánh giá mẫu, xu hướng theo tháng; tổng tỷ trọng 100,0% của đánh giá tiêu cực | Đạt |
+| TC-13 | FR-19 | Chỉ số hài lòng theo tháng cho toàn bộ và từng sản phẩm, đúng công thức (TB − 1)/4 × 100 | toàn bộ: 143 tháng, điểm TB và chỉ số khớp pandas, đúng công thức; sản phẩm B007JFMH8M: 4 tháng khớp pandas | Đạt |
+| TC-14 | FR-20 | Dự báo 3/6/12 tháng có khoảng tin cậy 95%; sản phẩm < 36 tháng báo không đủ dữ liệu; thắng mô hình ngây thơ | toàn bộ, 3 tháng: 3 điểm, cận dưới ≤ dự báo ≤ cận trên; toàn bộ, 6 tháng: 6 điểm, cận dưới ≤ dự báo ≤ cận trên; toàn bộ, 12 tháng: 12 điểm, cận dưới ≤ dự báo ≤ cận trên; kiểm tra lùi 12 tháng: MAE 0,61 < ngây thơ 1,50 điểm (NFR-04); sản phẩm B007JFMH8M (< 36 tháng): eligible = False, “Không đủ dữ liệu để dự báo (cần ≥ 36 thá…”; sản phẩm B002QWP89S (≥ 36 tháng): 6 tháng dự báo kèm khoảng tin cậy | Đạt |
