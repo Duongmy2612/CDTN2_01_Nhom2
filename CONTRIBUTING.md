@@ -1,37 +1,56 @@
 # Quy trình làm việc với Git của nhóm
 
-Kho chung: `https://github.com/legiahuy12052005nt-cloud/CDDTN2_GR2` (quy ước chốt ở báo cáo buổi 3, mục 5.2).
+Kho chung từ buổi 7: `https://github.com/Duongmy2612/CDTN2_01_Nhom2` (chủ kho: nhóm trưởng Dương Diễm My).
+Lịch sử sprint xây dựng 1 (buổi 6, bản 1.3.0, các commit trích trong báo cáo buổi 6) vẫn nằm ở kho cũ
+`https://github.com/legiahuy12052005nt-cloud/CDDTN2_GR2`; kho mới bắt đầu từ đúng bản 1.3.0 đó.
 
-## 1. Nhánh
+## 1. Mỗi thành viên một nhánh
 
-| Nhánh | Dùng để | Ai được đẩy trực tiếp |
+| Nhánh | Người phụ trách | Phần việc chính |
 |---|---|---|
-| `main` | Bản ổn định để demo và nộp; mỗi lần gộp từ `develop` gắn thẻ phiên bản (`v1.3.0`…) | Không ai – chỉ gộp qua pull request |
-| `develop` | Tích hợp các mục backlog đã xong | Không ai – chỉ gộp qua pull request |
-| `feature/PB-xx-ten-ngan` | Mỗi mục backlog (hoặc một phần của mục) một nhánh, tách từ `develop` | Người phụ trách mục đó |
+| `main` | Cả nhóm – không ai đẩy trực tiếp | Bản tích hợp để demo và nộp; chỉ gộp qua pull request; mỗi mốc gắn thẻ (`v1.4.0`…) |
+| `diemmy` | Dương Diễm My (nhóm trưởng) | Dữ liệu, kiểm thử, tích hợp, tài liệu |
+| `kaysone` | KAYSONE Souk Anong | Mô hình ML/NLP: dự đoán, chủ đề phàn nàn |
+| `hoangthuan` | Nguyễn Hoàng Thuận | Backend, chỉ số hài lòng, dự báo, Docker |
+| `giahuy` | Lê Gia Huy | Frontend, trợ lý AI, tích hợp giao diện – API |
 
-Ví dụ: `feature/PB-19-gemini-giai-phap`, `feature/PB-16-bien-ban-kiem-thu`, `feature/PB-07-e-t2`.
+Nhìn tab **Pull requests** (lọc theo nhánh) hoặc **Insights → Contributors** trên GitHub là biết phần nào của ai.
+Mỗi người commit bằng **tài khoản Git của chính mình** – đặt một lần trên máy:
+
+```bash
+git config --global user.name  "Họ Tên"
+git config --global user.email "email-dang-ky-GitHub@..."      # đúng email của tài khoản GitHub thì commit mới hiện ảnh đại diện
+```
 
 ## 2. Một vòng làm việc
 
 ```bash
-git switch develop && git pull                       # lấy bản tích hợp mới nhất
-git switch -c feature/PB-xx-ten-ngan                 # nhánh riêng cho việc của mình
+git checkout <nhanh-cua-minh>
+git pull origin main                    # lấy bản tích hợp mới nhất (gồm phần các bạn đã gộp)
 # ... sửa mã, chạy thử ...
-pytest backend/tests -q                              # kiểm thử phải đạt trước khi commit
-git add <các tệp đã sửa> && git commit -m "PB-xx: mô tả ngắn việc đã làm"
-git push -u origin feature/PB-xx-ten-ngan            # đẩy lên ít nhất 2 lần mỗi buổi làm việc
+pytest backend/tests -q                 # phải đạt hết trước khi commit
+git add <đúng các tệp mình sửa>         # không dùng "git add ." để khỏi lẫn dữ liệu, tệp tạm
+git commit -m "feat(predict): mô tả ngắn việc đã làm [PB-06]"
+git push origin <nhanh-cua-minh>        # đẩy lên ít nhất 2 lần mỗi buổi làm việc
 ```
 
-Mở pull request vào `develop` trên GitHub, điền mẫu có sẵn (danh sách kiểm tra DoD), nhờ một thành viên khác xem lại.
-CI (GitHub Actions) tự chạy `pytest` và `npm run build`; chỉ gộp khi CI xanh và đã có người Approve.
-Nếu `develop` đã thay đổi trong lúc mình làm: `git pull --rebase origin develop`, sửa xung đột (nếu có), chạy lại kiểm thử rồi đẩy lại.
+Trên GitHub: **Compare & pull request** → base `main` ← compare `<nhanh-cua-minh>`, điền mẫu có sẵn.
+CI (GitHub Actions) tự chạy `pytest` và `npm run build`; nhóm trưởng gộp khi CI xanh. Gộp xong, lần làm tiếp theo
+nhớ `git pull origin main` trước khi sửa.
 
 ## 3. Viết commit
 
-- Bắt đầu bằng mã backlog: `PB-05: thêm precision, recall macro vào bảng so sánh mô hình`.
-- Việc chung không thuộc mục nào (cấu hình, tài liệu): `chore: …`, `docs: …`.
-- Mỗi commit một ý, chạy được; không dồn cả buổi vào một commit “Upload source code”.
+Dạng `loại(phạm vi): mô tả [mã backlog]` – một commit một ý, chạy được:
+
+| Loại | Dùng khi | Ví dụ |
+|---|---|---|
+| `feat` | Thêm chức năng | `feat(predict): kiểm tra mã sản phẩm khi tự nhập dự đoán [PB-06]` |
+| `fix` | Sửa lỗi | `fix(topics): trả số đánh giá chưa xếp chủ đề [PB-07]` |
+| `test` | Thêm/sửa kiểm thử | `test(frontend): kiểm tra giao diện gọi đúng API [PB-03]` |
+| `docs` | Tài liệu, biên bản | `docs(test): biên bản chạy Docker Compose trên máy nhóm [NFR-08]` |
+| `chore` | Cấu hình, công cụ | `chore(docker): frontend chỉ chạy khi backend sẵn sàng [PB-17]` |
+
+Không dồn cả buổi vào một commit “Upload source code”.
 
 ## 4. Không đưa lên GitHub
 
@@ -41,7 +60,8 @@ Vertex AI rồi tạo khóa mới (xóa commit không làm khóa cũ hết hiệ
 
 ## 5. Definition of Done (báo cáo buổi 3, mục 5.3)
 
-1. Mã đã gộp vào `develop` sau khi được xem lại.
+1. Mã đã gộp vào `main` qua pull request, CI xanh.
 2. Chạy đúng trên bộ dữ liệu mẫu chung của nhóm và đạt tiêu chí chấp nhận của mục backlog.
 3. Có kiểm thử tự động cho phần logic mới; `pytest` đạt.
-4. Tài liệu (README, báo cáo buổi) cập nhật nếu thay đổi cách dùng hoặc hợp đồng API.
+4. Tài liệu (README, báo cáo buổi) cập nhật nếu thay đổi cách dùng hoặc hợp đồng API
+   (đổi lược đồ → tăng `API_CONTRACT_VERSION`, chạy `python scripts/export_openapi.py`).
