@@ -82,7 +82,16 @@ AI_MAX_REVIEWS = 30
 AI_REVIEW_MAX_WORDS = 120
 AI_RECENT_MONTHS = 12                 # ưu tiên đánh giá trong 12 tháng gần nhất khi chọn bằng chứng gửi Gemini
 AI_TIMEOUT_SECONDS = 30
-
+AI_MIN_ACTION_WORDS = 8
+AI_MIN_KPI_WORDS = 4
+AI_DANGLING_WORDS = {
+    "và", "của", "cho", "để", "với", "về",
+    "các", "những", "trong", "tại", "theo",
+    "nhằm", "hoặc", "là", "được", "từ",
+    "dòng", "loại", "mức", "việc", "sự",
+    "đến", "như"
+}
+AI_MAX_CALLS = 3
 FULL_DATASET_ROWS = 393_890            # số dòng sạch của bộ đầy đủ (dùng để co giãn ngưỡng)
 
 
