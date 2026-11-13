@@ -1,0 +1,12 @@
+# Lưu mọi tệp văn bản trong kho với ký tự xuống dòng LF; khi lấy về, Git dùng kiểu xuống dòng của từng máy (Windows: CRLF).
+# Tránh việc cả tệp hiện là “đã sửa” chỉ vì máy Windows và máy Linux/macOS xuống dòng khác nhau.
+* text=auto
+# Script chạy trong Docker/Linux luôn giữ LF
+*.sh text eol=lf
+Dockerfile.* text eol=lf
+# Tệp nhị phân: không so sánh theo dòng
+*.png binary
+*.jpg binary
+*.joblib binary
+*.pdf binary
+*.docx binary

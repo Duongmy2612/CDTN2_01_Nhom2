@@ -11,10 +11,14 @@ services:
       - ./backend/cache:/app/backend/cache
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
-      interval: 15s
-      retries: 5
+      interval: 5s
+      timeout: 5s
+      retries: 24              # nạp lại kết quả phiên trước (toàn bộ Reviews.csv) có thể mất vài chục giây
+      start_period: 10s
   frontend:
     build: { context: ., dockerfile: Dockerfile.frontend }
     ports: ["5173:5173"]
     environment: [BACKEND_URL=http://backend:8000]
-    depends_on: [backend]
+    depends_on:
+      backend:
+        condition: service_healthy   # chỉ mở giao diện khi backend đã trả /api/health – tránh lỗi proxy 502 lúc vừa khởi động

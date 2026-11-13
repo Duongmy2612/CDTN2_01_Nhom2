@@ -83,6 +83,10 @@ export default function EdaTab() {
   const nBig = monTrim.filter((d) => d.n >= MIN_PER_MONTH).length
   const T = nBig >= 3 || !monTrim.length ? MIN_PER_MONTH : 1     // bộ lọc còn quá ít dữ liệu: vẽ mọi tháng có đánh giá, kèm cảnh báo
   const lineData = monTrim.map((d) => (d.n >= T ? d : { ...d, avg_score: null, neg_rate: null }))
+  // PB-08: tháng cuối chưa trọn (dữ liệu dừng giữa tháng) – Tổng quan, Dự báo, cảnh báo đều dừng ở tháng trọn vẹn trước đó
+  const partial = monTrim.find((d) => d.partial)
+  const partialNote = partial ? `cột nhạt ${monthLabel(partial.month)}: tháng chưa trọn, dữ liệu đến ${kpi.data?.date_max?.split('-').reverse().join('/') || '…'}` : ''
+  const partialRow = (d) => (d.partial ? [['Lưu ý', 'tháng chưa trọn', COLOR.muted]] : [])
   const distData = dist.data?.data || []
   const distTotal = distData.reduce((a, b) => a + b.n, 0)
   const tags = [
@@ -147,22 +151,25 @@ export default function EdaTab() {
       )}
 
       <div className="grid xl:grid-cols-2 gap-5">
-        <Card title="Số đánh giá theo tháng" subtitle={!active ? 'Lượng đánh giá tăng mạnh từ 2008; các tháng đầu rất ít dữ liệu' : none ? emptyMsg
-          : `${nf(n)} đánh giá khớp bộ lọc, ${nf(monData.filter((d) => d.n > 0).length)} tháng có đánh giá (${monthLabel(monData[0]?.month)} – ${monthLabel(monData[monData.length - 1]?.month)})`}>
+        <Card title="Số đánh giá theo tháng" subtitle={[!active ? 'Lượng đánh giá tăng mạnh từ 2008; các tháng đầu rất ít dữ liệu' : none ? emptyMsg
+          : `${nf(n)} đánh giá khớp bộ lọc, ${nf(monData.filter((d) => d.n > 0).length)} tháng có đánh giá (${monthLabel(monData[0]?.month)} – ${monthLabel(monData[monData.length - 1]?.month)})`, partialNote].filter(Boolean).join(' · ')}>
           {mon.loading ? <Loading h="h-64" /> : mon.error ? <ErrorBox error={mon.error} /> : !monTrim.length ? <Empty title={emptyMsg} /> : (
             <div className="h-64"><ResponsiveContainer>
               <BarChart data={monTrim} margin={{ top: 6, right: 8, bottom: 0, left: -6 }}>
                 <CartesianGrid stroke={COLOR.grid} vertical={false} />
                 <XAxis dataKey="month" tickFormatter={monthShort} {...axisProps} minTickGap={28} />
                 <YAxis tickFormatter={(v) => nf(v)} allowDecimals={false} {...axisProps} />
-                <Tooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTip labelFormat={monthLabel} rows={(d) => [['Số đánh giá', nf(d.n), COLOR.primary], ['Điểm TB', nf(d.avg_score, 2)]]} />} />
-                <RBar dataKey="n" fill={COLOR.primary} radius={[2, 2, 0, 0]} minPointSize={0} isAnimationActive={false} />
+                <Tooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTip labelFormat={monthLabel} rows={(d) => [['Số đánh giá', nf(d.n), COLOR.primary], ['Điểm TB', nf(d.avg_score, 2)], ...partialRow(d)]} />} />
+                <RBar dataKey="n" fill={COLOR.primary} radius={[2, 2, 0, 0]} minPointSize={0} isAnimationActive={false}>
+                  {monTrim.map((d) => <Cell key={d.month} fill={COLOR.primary} fillOpacity={d.partial ? 0.35 : 1} />)}
+                </RBar>
               </BarChart>
             </ResponsiveContainer></div>
           )}
         </Card>
         <Card title="Điểm sao trung bình và tỷ lệ tiêu cực theo tháng"
-          subtitle={T === MIN_PER_MONTH ? `Hai chỉ số vẽ riêng trục; chỉ hiển thị tháng có ≥ ${MIN_PER_MONTH} đánh giá` : 'Bộ lọc còn ít dữ liệu: hiển thị mọi tháng có đánh giá – mỗi điểm chỉ từ vài đánh giá nên dao động mạnh'}>
+          subtitle={(T === MIN_PER_MONTH ? `Hai chỉ số vẽ riêng trục; chỉ hiển thị tháng có ≥ ${MIN_PER_MONTH} đánh giá` : 'Bộ lọc còn ít dữ liệu: hiển thị mọi tháng có đánh giá – mỗi điểm chỉ từ vài đánh giá nên dao động mạnh')
+            + (partial ? ` · ${monthLabel(partial.month)} là tháng chưa trọn, tab Tổng quan và Dự báo dừng ở tháng trước đó` : '')}>
           {mon.loading ? <Loading h="h-64" /> : mon.error ? <ErrorBox error={mon.error} /> : !monTrim.length ? <Empty title={emptyMsg} /> : (
             <div className="grid grid-rows-2 h-64 gap-1">
               <ResponsiveContainer>
@@ -170,7 +177,7 @@ export default function EdaTab() {
                   <CartesianGrid stroke={COLOR.grid} vertical={false} />
                   <XAxis dataKey="month" hide />
                   <YAxis domain={[(min) => Math.max(1, Math.floor(min * 2) / 2), 5]} tickCount={4} tickFormatter={(v) => nf(v, 1)} {...axisProps} width={44} />
-                  <Tooltip content={<ChartTip labelFormat={monthLabel} rows={(d) => [['Điểm TB', nf(d.avg_score, 2), COLOR.ink], ['Tỷ lệ tiêu cực', pct(d.neg_rate), COLOR.neg], ['Số đánh giá', nf(d.n)]]} />} />
+                  <Tooltip content={<ChartTip labelFormat={monthLabel} rows={(d) => [['Điểm TB', nf(d.avg_score, 2), COLOR.ink], ['Tỷ lệ tiêu cực', pct(d.neg_rate), COLOR.neg], ['Số đánh giá', nf(d.n)], ...partialRow(d)]} />} />
                   <Line dataKey="avg_score" stroke={COLOR.ink} strokeWidth={2} dot={T === 1 ? { r: 2.5 } : false} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>

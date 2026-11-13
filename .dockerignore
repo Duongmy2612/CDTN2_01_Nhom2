@@ -1,7 +1,9 @@
 # Không đưa vào ngữ cảnh build Docker: dữ liệu lớn (gắn bằng volume), bí mật, môi trường cục bộ
 backend/.env
-backend/data/raw/
-backend/data/processed/
+# toàn bộ backend/data được gắn bằng volume (docker-compose.yml) – không chép vào image; riêng bộ mẫu 51 MB
+# làm ngữ cảnh build lớn và build chậm (NFR-08: cài đặt ≤ 15 phút)
+backend/data/
+backend/tests/
 backend/models/*.joblib
 backend/models/*.json
 backend/cache/*.json

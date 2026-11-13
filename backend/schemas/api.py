@@ -10,8 +10,9 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel as _PydanticBase, ConfigDict, Field
 
-API_CONTRACT_VERSION = "1.2.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
+API_CONTRACT_VERSION = "1.3.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
 # 1.2.0: bổ sung trường tùy chọn time_check, reference (#11), signal, backtest (#10); thêm bảng xuất model_metrics, forecast (#20)
+# 1.3.0 (sprint XD1): prec_macro3, rec_macro3 (#11); complete, problem của giải pháp, n_calls, incomplete_actions (#17)
 
 
 class BaseModel(_PydanticBase):
