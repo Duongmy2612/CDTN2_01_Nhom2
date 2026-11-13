@@ -3,4 +3,5 @@ import os
 import tempfile
 
 os.environ["FRI_WORK_DIR"] = tempfile.mkdtemp(prefix="fri_test_")
-os.environ.pop("GEMINI_API_KEY", None)
+os.environ["GEMINI_API_KEY"] = ""
+os.environ["GEMINI_MODEL"] = ""
