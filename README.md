@@ -1,7 +1,7 @@
 # FoodReview Insight
 
 Ứng dụng web phân tích và dự báo mức độ hài lòng của khách hàng từ dữ liệu đánh giá thực phẩm trên Amazon
-(Chuyên đề tốt nghiệp 2 – Khoa CNTT, ĐH Văn Lang). Kiến trúc phân lớp: React (trình bày) – FastAPI (nghiệp vụ) –
+(Chuyên đề tốt nghiệp 2 – Khoa CNTT, ĐH Văn Lang; GVHD: ThS. Hà Đồng Hưng; giảng viên giảng dạy: ThS. Nguyễn Văn Trung). Kiến trúc phân lớp: React (trình bày) – FastAPI (nghiệp vụ) –
 CSV/joblib/JSON (dữ liệu); Gemini API là dịch vụ ngoài, chỉ backend gọi.
 
 Tải file CSV (định dạng Amazon Fine Food Reviews) → backend chạy nền 7 bước: kiểm tra → làm sạch R1–R9 → EDA →
@@ -178,3 +178,13 @@ Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và b�
   (cả trang Sản phẩm & cảnh báo), `app_model_full` (cả trang Mô hình ML), `app_chatbot` (chatbot trả lời sản phẩm rủi ro cao).
 - **Thời gian xử lý** tăng do có thêm kiểm tra theo thời gian: mẫu 100.000 dòng ≈ 2–3 phút, toàn bộ Reviews.csv ≈ 3–4 phút
   (đo trên máy chạy thử: 163 giây và 235 giây).
+
+## 12. Nhóm thực hiện
+| Thành viên | Nhánh | Phần phụ trách chính |
+|---|---|---|
+| Dương Diễm My (nhóm trưởng) | `diemmy` | EDA, làm sạch R1–R9, DataService/EdaService; quy trình Git; kiểm thử chấp nhận, kiểm tra tích hợp; README, demo |
+| KAYSONE Souk Anong | `kaysone` | Mô hình phân loại (notebook 02), chủ đề phàn nàn (notebook 03, 06); ModelService, TopicService; tự nhập dự đoán |
+| Lê Gia Huy | `giahuy` | Frontend React, wireframe; trợ lý AI Gemini (AIService, chatbot), chạy AI hàng loạt, NFR-10 |
+| Nguyễn Hoàng Thuận | `hoangthuan` | FastAPI, hợp đồng 20 API, ERD; dự báo, cảnh báo (notebook 04, 05), job nền; Docker, CI |
+
+Mỗi thành viên commit trên nhánh của mình bằng tài khoản GitHub riêng và mở pull request vào `main`; nhóm trưởng gộp khi CI xanh.
