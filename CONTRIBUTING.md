@@ -2,7 +2,9 @@
 
 Kho chung từ buổi 7: `https://github.com/Duongmy2612/CDTN2_01_Nhom2` (chủ kho: nhóm trưởng Dương Diễm My).
 Lịch sử sprint xây dựng 1 (buổi 6, bản 1.3.0, các commit trích trong báo cáo buổi 6) vẫn nằm ở kho cũ
-`https://github.com/legiahuy12052005nt-cloud/CDDTN2_GR2`; kho mới bắt đầu từ đúng bản 1.3.0 đó.
+`https://github.com/legiahuy12052005nt-cloud/CDDTN2_GR2`. Trên kho mới, mỗi thành viên nộp lại phần mình đã làm từ buổi 4
+đến buổi 7 bằng tài khoản của mình, qua pull request theo từng lượt; ngày commit là ngày nộp lên kho mới, nhãn `[B4]`, `[B5]`,
+`[PB-xx]` trong lời commit cho biết phần việc thuộc buổi hay mục backlog nào.
 
 ## 1. Mỗi thành viên một nhánh
 
