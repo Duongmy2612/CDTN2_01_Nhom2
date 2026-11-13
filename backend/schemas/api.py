@@ -10,8 +10,9 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel as _PydanticBase, ConfigDict, Field
 
-API_CONTRACT_VERSION = "1.2.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
+API_CONTRACT_VERSION = "1.3.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
 # 1.2.0: bổ sung trường tùy chọn time_check, reference (#11), signal, backtest (#10); thêm bảng xuất model_metrics, forecast (#20)
+# 1.3.0 (sprint XD1): prec_macro3, rec_macro3 (#11); complete, problem của giải pháp, n_calls, incomplete_actions (#17)
 
 
 class BaseModel(_PydanticBase):
@@ -155,6 +156,8 @@ class ModelMetric(BaseModel):
     prec_neg: Optional[float] = None
     rec_neg: Optional[float] = None
     acc3: Optional[float] = None
+    prec_macro3: Optional[float] = Field(None, description="Precision trung bình macro 3 lớp cảm xúc")
+    rec_macro3: Optional[float] = Field(None, description="Recall trung bình macro 3 lớp cảm xúc")
 
 
 class ModelMetricsResponse(BaseModel):
@@ -356,6 +359,8 @@ class Solution(BaseModel):
     action: str
     priority: Literal["cao", "trung bình", "thấp"]
     kpi: str
+    complete: Optional[bool] = Field(None, description="Giải pháp đủ ý: hành động ≥ 8 từ, không bị cắt giữa chừng, chỉ số theo dõi ≥ 4 từ")
+    problem: Optional[str] = Field(None, description="Lý do giải pháp chưa đạt (khi complete = false)")
 
 
 class InsightResponse(BaseModel):
@@ -373,6 +378,8 @@ class InsightResponse(BaseModel):
     n_reviews_sent: Optional[int] = None
     note: Optional[str] = None
     latency_ms: Optional[float] = None
+    n_calls: Optional[int] = Field(None, description="Số lần gọi Gemini cho kết quả này (tối đa 3: gọi lại khi sai lược đồ hoặc giải pháp thiếu ý)")
+    incomplete_actions: Optional[int] = Field(None, description="Số giải pháp vẫn thiếu ý sau khi gọi lại")
 
 
 class ChatMessage(BaseModel):
