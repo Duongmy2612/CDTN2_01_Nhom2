@@ -44,7 +44,10 @@ def evaluate(y_true, P=None, y_pred=None) -> dict:
         y_pred = P.argmax(1) + 1
     s_true = SENT[y_true]; s_pred = sent_from_proba(P) if P is not None else SENT[y_pred]
     p, r, f, _ = precision_recall_fscore_support(s_true, s_pred, labels=[0, 1, 2], zero_division=0)
+    # PB-05 (tiêu chí chấp nhận buổi 3): bảng so sánh có Accuracy, Precision, Recall, F1-macro, MAE – precision/recall
+    # trung bình macro 3 lớp đi cùng F1-macro; precision/recall lớp Tiêu cực giữ lại vì bỏ sót lời chê là lỗi đắt nhất
     out = {"f1_macro3": f1_score(s_true, s_pred, average="macro", labels=[0, 1, 2], zero_division=0),
+           "prec_macro3": float(np.mean(p)), "rec_macro3": float(np.mean(r)),
            "f1_neg": f[0], "f1_neu": f[1], "f1_pos": f[2], "prec_neg": p[0], "rec_neg": r[0],
            "acc3": accuracy_score(s_true, s_pred), "acc5": accuracy_score(y_true, y_pred),
            "mae": float(np.abs(y_true - y_pred).mean())}
