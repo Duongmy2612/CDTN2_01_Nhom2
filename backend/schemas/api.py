@@ -10,9 +10,10 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel as _PydanticBase, ConfigDict, Field
 
-API_CONTRACT_VERSION = "1.3.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
+API_CONTRACT_VERSION = "1.4.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
 # 1.2.0: bổ sung trường tùy chọn time_check, reference (#11), signal, backtest (#10); thêm bảng xuất model_metrics, forecast (#20)
 # 1.3.0 (sprint XD1): prec_macro3, rec_macro3 (#11); complete, problem của giải pháp, n_calls, incomplete_actions (#17)
+# 1.4.0 (sprint XD2 – tích hợp): product_id, product của dự đoán (#14); n_unassigned của chủ đề (#13)
 
 
 class BaseModel(_PydanticBase):
@@ -230,6 +231,18 @@ class TopicRef(BaseModel):
     weight: float
 
 
+class ProductContext(BaseModel):
+    """Bối cảnh của mã sản phẩm người dùng nhập ở màn hình Tự nhập dự đoán (lấy từ bảng sản phẩm của API #10)."""
+    product_id: str
+    n_reviews: int
+    avg_score: float
+    satisfaction_index: float = Field(..., ge=0, le=100, description="(điểm TB toàn kỳ − 1) / 4 × 100 – cùng công thức FR-19")
+    neg_rate: float
+    risk_level: RiskLevel
+    first_month: Optional[str] = None
+    last_month: Optional[str] = None
+
+
 class PredictResponse(BaseModel):
     pred_star: int = Field(..., ge=1, le=5)
     proba: dict[str, float] = Field(..., description="Xác suất từng mức sao, khóa '1'…'5'")
@@ -243,6 +256,9 @@ class PredictResponse(BaseModel):
     known_token_ratio: Optional[float] = Field(None, description="Tỷ lệ từ của văn bản có trong từ điển mô hình")
     note: Optional[str] = Field(None, description="Cảnh báo khi văn bản ít từ mô hình đã biết (ví dụ không phải tiếng Anh)")
     model_info: Optional[dict] = Field(None, description="Mô hình đã dùng, F1-macro, số đánh giá huấn luyện, dataset_version")
+    product_id: Optional[str] = Field(None, description="Mã sản phẩm đã chuẩn hóa (bỏ khoảng trắng, viết hoa) nếu người dùng có nhập")
+    product: Optional[ProductContext] = Field(None, description="Bối cảnh sản phẩm trong dữ liệu hiện tại; null khi không nhập mã "
+                                                                 "hoặc mã không có trong dữ liệu (khi đó note giải thích)")
 
 
 # --------------------------- chủ đề, dự báo, sản phẩm ----------------------- #
@@ -264,6 +280,8 @@ class TopicsResponse(BaseModel):
     topics: list[Topic]
     product_id: Optional[str] = None
     n_negative: Optional[int] = None
+    n_unassigned: Optional[int] = Field(None, description="Đánh giá tiêu cực không xếp được vào chủ đề nào (không chứa từ nào trong "
+                                                           "từ điển của mô hình chủ đề); Σ n_reviews + n_unassigned = n_negative")
 
 
 class MonthPoint(BaseModel):

@@ -3,7 +3,7 @@
  "info": {
   "title": "FoodReview Insight API",
   "description": "Hợp đồng API của đề tài Phân tích & dự báo mức độ hài lòng của khách hàng từ dữ liệu đánh giá thực phẩm trên Amazon (Chuyên đề tốt nghiệp 2 – ĐH Văn Lang).",
-  "version": "1.3.0"
+  "version": "1.4.0"
  },
  "paths": {
   "/api/health": {
@@ -1888,7 +1888,7 @@
      "version": {
       "type": "string",
       "title": "Version",
-      "default": "1.3.0"
+      "default": "1.4.0"
      },
      "dataset_loaded": {
       "type": "boolean",
@@ -3059,6 +3059,29 @@
       ],
       "title": "Model Info",
       "description": "Mô hình đã dùng, F1-macro, số đánh giá huấn luyện, dataset_version"
+     },
+     "product_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Product Id",
+      "description": "Mã sản phẩm đã chuẩn hóa (bỏ khoảng trắng, viết hoa) nếu người dùng có nhập"
+     },
+     "product": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ProductContext"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Bối cảnh sản phẩm trong dữ liệu hiện tại; null khi không nhập mã hoặc mã không có trong dữ liệu (khi đó note giải thích)"
      }
     },
     "type": "object",
@@ -3072,6 +3095,76 @@
      "latency_ms"
     ],
     "title": "PredictResponse"
+   },
+   "ProductContext": {
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "title": "Product Id"
+     },
+     "n_reviews": {
+      "type": "integer",
+      "title": "N Reviews"
+     },
+     "avg_score": {
+      "type": "number",
+      "title": "Avg Score"
+     },
+     "satisfaction_index": {
+      "type": "number",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Satisfaction Index",
+      "description": "(điểm TB toàn kỳ − 1) / 4 × 100 – cùng công thức FR-19"
+     },
+     "neg_rate": {
+      "type": "number",
+      "title": "Neg Rate"
+     },
+     "risk_level": {
+      "type": "string",
+      "enum": [
+       "high",
+       "medium",
+       "low",
+       "insufficient"
+      ],
+      "title": "Risk Level"
+     },
+     "first_month": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "First Month"
+     },
+     "last_month": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Month"
+     }
+    },
+    "type": "object",
+    "required": [
+     "product_id",
+     "n_reviews",
+     "avg_score",
+     "satisfaction_index",
+     "neg_rate",
+     "risk_level"
+    ],
+    "title": "ProductContext",
+    "description": "Bối cảnh của mã sản phẩm người dùng nhập ở màn hình Tự nhập dự đoán (lấy từ bảng sản phẩm của API #10)."
    },
    "ProductRow": {
     "properties": {
@@ -3689,6 +3782,18 @@
        }
       ],
       "title": "N Negative"
+     },
+     "n_unassigned": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "N Unassigned",
+      "description": "Đánh giá tiêu cực không xếp được vào chủ đề nào (không chứa từ nào trong từ điển của mô hình chủ đề); Σ n_reviews + n_unassigned = n_negative"
      }
     },
     "type": "object",
