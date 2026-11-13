@@ -60,7 +60,10 @@ def topics(product_id: Optional[str] = None):
     model = f"NMF k={len(st.topics)}"
     n_neg = int((st.df.sentiment == "neg").sum())
     if not product_id:
-        return {"meta": st.meta_block(), "model": model, "topics": st.topics, "n_negative": n_neg}
+        # PB-07: đánh giá tiêu cực không chứa từ nào trong từ điển NMF có topic_id = −1; trả riêng để tổng các chủ đề
+        # cộng phần chưa xếp khớp đúng số đánh giá tiêu cực ở tab Tổng quan, Phân tích (trước đây lệch mà không giải thích)
+        n_un = int((st.review_topics.topic_id < 0).sum())
+        return {"meta": st.meta_block(), "model": model, "topics": st.topics, "n_negative": n_neg, "n_unassigned": n_un}
     pid = product_id.strip().upper()
     if not (st.df.product_id == pid).any():              # thống nhất với #15, #16, #17: mã không có → 404
         raise ApiError(404, "PRODUCT_NOT_FOUND", f"Không tìm thấy sản phẩm {pid}")
@@ -76,7 +79,8 @@ def topics(product_id: Optional[str] = None):
                 "product_id": pid, "date": d.loc[i, "review_date"]} for i in sub.review_id.head(3)]
         out.append({**t, "n_reviews": int(len(sub)), "share": round(len(sub) / len(rt), 4), "samples": smp, "trend": []})
     out.sort(key=lambda t: -t["share"])
-    return {"meta": st.meta_block({"product_id": pid}), "model": model, "topics": out, "product_id": pid, "n_negative": int(len(ids))}
+    return {"meta": st.meta_block({"product_id": pid}), "model": model, "topics": out, "product_id": pid, "n_negative": int(len(ids)),
+            "n_unassigned": int(len(ids) - len(rt))}
 
 
 SORT_COL = {"n_reviews": "n_reviews", "avg_score": "avg_score", "delta": "delta", "neg_rate": "neg_rate_3m"}

@@ -30,7 +30,7 @@ export default function TopicsTab() {
 
   return (
     <div className="grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.6fr)] gap-5 items-start">
-      <Card title={`${topics.length} chủ đề phàn nàn`} subtitle={`${t.data.model} trên ${nf(t.data.n_negative)} đánh giá 1–2 sao · chọn để xem chi tiết`} pad={false}>
+      <Card title={`${topics.length} chủ đề phàn nàn`} subtitle={`${t.data.model} trên ${nf(t.data.n_negative)} đánh giá 1–2 sao (cùng số với tab Tổng quan) · chọn để xem chi tiết`} pad={false}>
         <div className="px-2 pb-2">
           {topics.map((x) => (
             <button key={x.topic_id} onClick={() => { setSel(x.topic_id); app.setFocusTopic(x.topic_id) }}
@@ -43,6 +43,12 @@ export default function TopicsTab() {
               <div className="text-[11.5px] text-muted mt-1 truncate">{x.keywords.slice(0, 5).join(' · ')}</div>
             </button>
           ))}
+          {/* PB-07: tổng các chủ đề + phần chưa xếp = số đánh giá tiêu cực, để số liệu khớp giữa các màn hình */}
+          {t.data.n_unassigned > 0 && (
+            <div className="px-3 pt-2 pb-1 text-[11.5px] text-muted border-t border-line mt-1">
+              {nf(t.data.n_unassigned)} đánh giá ({pct(t.data.n_unassigned / t.data.n_negative, 2)}) chưa xếp được chủ đề: nội dung không chứa từ nào trong từ điển của mô hình chủ đề.
+            </div>
+          )}
         </div>
       </Card>
 

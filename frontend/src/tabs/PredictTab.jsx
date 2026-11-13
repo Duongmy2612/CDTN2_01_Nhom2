@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Bot, History, Lightbulb, Loader2, Trash2, Wand2 } from 'lucide-react'
 import { api, errorMessage } from '../api/client.js'
 import { useApp } from '../lib/appContext.js'
-import { COLOR, SENT, nf, pct, sessionStore as store, starColor } from '../lib/format.js'
-import { Card, ErrorBox, Note, SentBadge, Stars } from '../components/ui.jsx'
+import { COLOR, SENT, monthLabel, nf, pct, sessionStore as store, signed, starColor } from '../lib/format.js'
+import { Card, ErrorBox, Note, RiskBadge, SentBadge, Stars } from '../components/ui.jsx'
 
 const EXAMPLES = [
   ['Hàng cũ, hộp móp', 'Stale and crushed', 'The coffee arrived stale and the box was completely crushed. Very disappointed, I will not buy this again.'],
@@ -148,6 +148,8 @@ function Result({ r, app }) {
         </div>
       </Card>
 
+      {r.product && <ProductContext r={r} app={app} />}
+
       <Card title="Đánh giá được tô màu theo từ ảnh hưởng" subtitle="Đỏ: kéo số sao xuống · xanh: kéo số sao lên">
         <p className="text-[14px] leading-8">
           {r.summary && <><b className="text-ink">{highlight(r.summary, tokMap, maxW)}</b><span className="text-muted"> — </span></>}
@@ -168,10 +170,33 @@ function Result({ r, app }) {
 
       <div className="flex flex-wrap items-center gap-3 text-[12px] text-muted">
         <span>Mô hình {r.model_info?.model} · F1-macro {nf(r.model_info?.f1_macro3, 3)} · học từ {nf(r.model_info?.n_train)} đánh giá đã làm sạch · dữ liệu {r.model_info?.dataset_version} · {nf(r.latency_ms, 0)} ms · {pct(r.known_token_ratio, 0)} từ có trong từ điển mô hình</span>
-        {r.product_id && <button className="btn ml-auto font-mono" onClick={() => app.openProduct(r.product_id)}>Xem sản phẩm {r.product_id}</button>}
-        <button className={`btn ${r.product_id ? '' : 'ml-auto'}`} onClick={() => app.openChat(`Giải thích vì sao đánh giá sau được dự đoán ${r.pred_star} sao và người bán nên phản hồi thế nào: "${r.text.slice(0, 400)}"`)}><Bot size={15} />Hỏi trợ lý AI</button>
+        {/* chỉ mở chi tiết khi mã có trong dữ liệu – mã không có thì ngăn chi tiết chỉ toàn lỗi 404 (lỗi tích hợp buổi 7) */}
+        {r.product && <button className="btn ml-auto font-mono" onClick={() => app.openProduct(r.product.product_id)}>Xem sản phẩm {r.product.product_id}</button>}
+        <button className={`btn ${r.product ? '' : 'ml-auto'}`} onClick={() => app.openChat(`Giải thích vì sao đánh giá sau được dự đoán ${r.pred_star} sao và người bán nên phản hồi thế nào: "${r.text.slice(0, 400)}"`)}><Bot size={15} />Hỏi trợ lý AI</button>
       </div>
     </>
+  )
+}
+
+// So kết quả dự đoán với mức chung của sản phẩm (cùng số liệu với tab Sản phẩm & cảnh báo – API #10)
+function ProductContext({ r, app }) {
+  const p = r.product
+  const diff = r.satisfaction_index - p.satisfaction_index
+  return (
+    <Card title={`Sản phẩm ${p.product_id} trong dữ liệu`} subtitle="Cùng số liệu với tab Sản phẩm & cảnh báo; chỉ số hài lòng tính bằng một công thức (TB − 1) / 4 × 100"
+      action={<RiskBadge level={p.risk_level} />}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[13px]">
+        <div><div className="text-[12px] text-muted">Số đánh giá</div><div className="font-semibold tabular-nums text-ink">{nf(p.n_reviews)}</div>
+          <div className="text-[11.5px] text-muted">{monthLabel(p.first_month)} – {monthLabel(p.last_month)}</div></div>
+        <div><div className="text-[12px] text-muted">Điểm TB của sản phẩm</div><div className="font-semibold tabular-nums text-ink">{nf(p.avg_score, 2)} ★</div></div>
+        <div><div className="text-[12px] text-muted">Chỉ số hài lòng sản phẩm</div><div className="font-semibold tabular-nums text-ink">{nf(p.satisfaction_index, 1)}</div></div>
+        <div><div className="text-[12px] text-muted">Tỷ lệ tiêu cực</div><div className="font-semibold tabular-nums" style={{ color: COLOR.neg }}>{pct(p.neg_rate)}</div></div>
+      </div>
+      <div className="mt-3 text-[13px] text-ink">
+        Đánh giá vừa nhập có chỉ số hài lòng <b className="tabular-nums">{nf(r.satisfaction_index, 1)}</b>, {Math.abs(diff) < 5 ? 'gần với' : diff < 0 ? 'thấp hơn' : 'cao hơn'} mức chung của sản phẩm
+        {Math.abs(diff) >= 5 && <b className="tabular-nums" style={{ color: diff < 0 ? COLOR.neg : COLOR.pos }}> {signed(diff, 1)} điểm</b>}.
+      </div>
+    </Card>
   )
 }
 
