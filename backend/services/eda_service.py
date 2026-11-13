@@ -88,8 +88,12 @@ def chart(state, name: str, f: dict | None) -> dict:
                  "sentiment": "neg" if k <= 2 else ("neu" if k == 3 else "pos")} for k, v in vc.items()]
     elif name == "monthly":
         g = group_stats(d, "year_month")
+        # PB-08: tháng sau tháng trọn vẹn cuối (dữ liệu dừng giữa tháng) được đánh dấu partial – tab Tổng quan, Dự báo,
+        # cảnh báo đều dừng ở last_full_month, nên biểu đồ Phân tích phải ghi rõ tháng này chưa trọn để số liệu không “lệch”
+        lf = (state.meta or {}).get("last_full_month")
         data = [{"month": r.year_month, "n": int(r.n), "avg_score": round(r.avg_score, 4), "neg_rate": round(r.neg_rate, 4),
-                 "sat_index": round(C.satisfaction_index(r.avg_score), 2)} for r in g.itertuples()]
+                 "sat_index": round(C.satisfaction_index(r.avg_score), 2), "partial": bool(lf and r.year_month > lf)}
+                for r in g.itertuples()]
     elif name == "length_by_score":
         q = d.groupby("score").n_words.describe(percentiles=[.25, .5, .75])
         data = [{"score": int(s), "q1": float(r["25%"]), "median": float(r["50%"]), "q3": float(r["75%"]),
