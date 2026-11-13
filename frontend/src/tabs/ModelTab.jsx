@@ -62,17 +62,13 @@ export default function ModelTab() {
       <Card title="Bảng chỉ số chi tiết" pad={false}>
         <div className="overflow-x-auto">
           <table className="tbl">
-            {/* 9 cột để đọc trọn trên màn hình 1366 px (NFR-09): gộp F1 ba lớp và hai mức accuracy vào một ô */}
-            <thead><tr><th>Mô hình</th><th>Tham số</th><th className="text-right">F1-macro</th><th className="text-right">Precision / Recall (macro)</th><th className="text-right">F1 tiêu cực / trung tính / tích cực</th><th className="text-right">Precision / Recall tiêu cực</th><th className="text-right">Accuracy 3 lớp / 5 sao</th><th className="text-right">MAE (sao)</th><th className="text-right">Thời gian học</th></tr></thead>
+            <thead><tr><th>Mô hình</th><th>Tham số</th><th className="text-right">F1-macro</th><th className="text-right">F1 tiêu cực</th><th className="text-right">F1 trung tính</th><th className="text-right">F1 tích cực</th><th className="text-right">Precision / Recall (macro)</th><th className="text-right">Precision / Recall tiêu cực</th><th className="text-right">Accuracy 3 lớp</th><th className="text-right">Accuracy 5 sao</th><th className="text-right">MAE (sao)</th><th className="text-right">Thời gian học</th></tr></thead>
             <tbody>{d.models.map((x) => (
               <tr key={x.model} className={x.selected ? 'bg-primarySoft/50' : ''}>
-                <td className="text-ink font-medium min-w-[150px]">{x.selected && <CheckCircle2 size={13} className="inline text-primary mr-1 -mt-0.5" />}{NAME[x.model]}</td>
+                <td className="text-ink font-medium whitespace-nowrap">{x.selected && <CheckCircle2 size={13} className="inline text-primary mr-1 -mt-0.5" />}{NAME[x.model]}</td>
                 <td className="text-muted whitespace-nowrap">{x.params}</td>
-                <td className="text-right font-semibold text-ink">{nf(x.f1_macro3, 3)}</td>
-                <td className="text-right whitespace-nowrap">{nf(x.prec_macro3, 3)} / {nf(x.rec_macro3, 3)}</td>
-                <td className="text-right whitespace-nowrap">{nf(x.f1_neg, 3)} / {nf(x.f1_neu, 3)} / {nf(x.f1_pos, 3)}</td>
-                <td className="text-right whitespace-nowrap">{nf(x.prec_neg, 3)} / {nf(x.rec_neg, 3)}</td>
-                <td className="text-right whitespace-nowrap">{pct(x.acc3)} / {pct(x.acc5)}</td><td className="text-right">{nf(x.mae, 3)}</td><td className="text-right whitespace-nowrap">{nf(x.fit_seconds, 1)} s</td>
+                <td className="text-right font-semibold text-ink">{nf(x.f1_macro3, 3)}</td><td className="text-right">{nf(x.f1_neg, 3)}</td><td className="text-right">{nf(x.f1_neu, 3)}</td><td className="text-right">{nf(x.f1_pos, 3)}</td>
+                <td className="text-right">{nf(x.prec_macro3, 3)} / {nf(x.rec_macro3, 3)}</td><td className="text-right">{nf(x.prec_neg, 3)} / {nf(x.rec_neg, 3)}</td><td className="text-right">{pct(x.acc3)}</td><td className="text-right">{pct(x.acc5)}</td><td className="text-right">{nf(x.mae, 3)}</td><td className="text-right">{nf(x.fit_seconds, 1)} s</td>
               </tr>))}</tbody>
           </table>
         </div>

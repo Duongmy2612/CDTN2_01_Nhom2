@@ -163,10 +163,11 @@ def build_pdf(state) -> bytes:
         E.append(Paragraph("Mô hình dự đoán số sao và cảm xúc", ss["h"]))
         E.append(Paragraph(f"Huấn luyện trên {vn(r['split']['train'], 0)} đánh giá đã làm sạch, kiểm tra trên {vn(r['split']['test'], 0)} đánh giá "
                            f"(chia 80/20 phân tầng theo số sao, random_state = 42). Mô hình được chọn: <b>{r['selected']}</b>.", ss["p"]))
-        rows = [[x["model"] + (" ✓" if x.get("selected") else ""), x["params"], vn(x["f1_macro3"], 3), vn(x["f1_neg"], 3), vn(x["f1_neu"], 3),
-                 vn(x["f1_pos"], 3), vn(x["acc5"], 3), vn(x["mae"], 3)] for x in r["models"]]
-        E.append(table(["Mô hình", "Tham số", "F1-macro 3 lớp", "F1 tiêu cực", "F1 trung tính", "F1 tích cực", "Accuracy 5 sao", "MAE"], rows,
-                       [.12, .16, .13, .11, .12, .11, .13, .12]))
+        pm = lambda x, k: "–" if x.get(k) is None else vn(x[k], 3)   # noqa: E731 – mô hình huấn luyện ở bản cũ chưa có precision/recall macro
+        rows = [[x["model"] + (" ✓" if x.get("selected") else ""), x["params"], vn(x["f1_macro3"], 3), pm(x, "prec_macro3"), pm(x, "rec_macro3"),
+                 vn(x["f1_neg"], 3), vn(x["acc3"], 3) if x.get("acc3") is not None else "–", vn(x["acc5"], 3), vn(x["mae"], 3)] for x in r["models"]]
+        E.append(table(["Mô hình", "Tham số", "F1-macro 3 lớp", "Precision macro", "Recall macro", "F1 tiêu cực", "Accuracy 3 lớp", "Accuracy 5 sao", "MAE"], rows,
+                       [.1, .13, .11, .11, .1, .1, .12, .12, .11]))
         up = ", ".join(k["term"] for k in r["keywords"]["up"][:12]); dn = ", ".join(k["term"] for k in r["keywords"]["down"][:12])
         E.append(Spacer(1, 4)); E.append(Paragraph(f"<b>Từ kéo số sao lên:</b> {up}.<br/><b>Từ kéo số sao xuống:</b> {dn}.", ss["p"]))
         tc = r.get("time_check")

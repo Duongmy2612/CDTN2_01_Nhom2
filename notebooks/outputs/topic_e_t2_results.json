@@ -1,0 +1,340 @@
+{
+ "n_docs": 57103,
+ "vocab_baseline": 20000,
+ "vocab_e_t2": 20000,
+ "seconds": 43.1,
+ "baseline_k9": {
+  "k": 9,
+  "npmi": 0.2406,
+  "diversity": 0.978,
+  "top20_product_share": 0.1095,
+  "unassigned": 2
+ },
+ "e_t2_grid": [
+  {
+   "k": 5,
+   "npmi": 0.1745,
+   "diversity": 0.98,
+   "top20_product_share": 0.0596
+  },
+  {
+   "k": 6,
+   "npmi": 0.1755,
+   "diversity": 0.983,
+   "top20_product_share": 0.0623
+  },
+  {
+   "k": 7,
+   "npmi": 0.1824,
+   "diversity": 0.943,
+   "top20_product_share": 0.0632
+  },
+  {
+   "k": 8,
+   "npmi": 0.1726,
+   "diversity": 0.938,
+   "top20_product_share": 0.0682
+  },
+  {
+   "k": 9,
+   "npmi": 0.1788,
+   "diversity": 0.933,
+   "top20_product_share": 0.0661
+  },
+  {
+   "k": 10,
+   "npmi": 0.1994,
+   "diversity": 0.94,
+   "top20_product_share": 0.0751
+  },
+  {
+   "k": 11,
+   "npmi": 0.1956,
+   "diversity": 0.909,
+   "top20_product_share": 0.0756
+  },
+  {
+   "k": 12,
+   "npmi": 0.2029,
+   "diversity": 0.917,
+   "top20_product_share": 0.0812
+  }
+ ],
+ "e_t2_best": {
+  "k": 12,
+  "npmi": 0.2029,
+  "diversity": 0.917,
+  "top20_product_share": 0.0812,
+  "unassigned": 2
+ },
+ "e_t2_k9": {
+  "k": 9,
+  "npmi": 0.1788,
+  "diversity": 0.933,
+  "top20_product_share": 0.0661,
+  "unassigned": 2
+ },
+ "baseline_topics": [
+  {
+   "keywords": [
+    "taste",
+    "flavor",
+    "tastes",
+    "tasted",
+    "water",
+    "texture",
+    "stuff",
+    "love"
+   ],
+   "share": 0.2013,
+   "template": "Hương vị, mùi, kết cấu không ngon"
+  },
+  {
+   "keywords": [
+    "coffee",
+    "cup",
+    "cups",
+    "weak",
+    "instant",
+    "roast",
+    "instant coffee",
+    "cup coffee"
+   ],
+   "share": 0.0959,
+   "template": "Cà phê nhạt/đắng, viên K-cup"
+  },
+  {
+   "keywords": [
+    "box",
+    "received",
+    "stale",
+    "date",
+    "arrived",
+    "package",
+    "bag",
+    "opened"
+   ],
+   "share": 0.1998,
+   "template": "Hàng cũ, hết hạn, bao bì hỏng khi nhận"
+  },
+  {
+   "keywords": [
+    "tea",
+    "green",
+    "green tea",
+    "teas",
+    "bags",
+    "tea bags",
+    "tea tea",
+    "cup"
+   ],
+   "share": 0.0622,
+   "template": "Trà: vị nhạt, túi lọc"
+  },
+  {
+   "keywords": [
+    "dog",
+    "food",
+    "dogs",
+    "eat",
+    "treats",
+    "cat",
+    "cats",
+    "china"
+   ],
+   "share": 0.1401,
+   "template": "Thức ăn thú cưng: xuất xứ, làm thú bệnh"
+  },
+  {
+   "keywords": [
+    "price",
+    "store",
+    "grocery",
+    "local",
+    "grocery store",
+    "expensive",
+    "99",
+    "worth"
+   ],
+   "share": 0.107,
+   "template": "Giá cao so với cửa hàng, phí giao hàng"
+  },
+  {
+   "keywords": [
+    "sugar",
+    "ingredients",
+    "syrup",
+    "corn",
+    "corn syrup",
+    "sweet",
+    "high",
+    "ingredient"
+   ],
+   "share": 0.0936,
+   "template": "Thành phần: đường, siro ngô, không tự nhiên"
+  },
+  {
+   "keywords": [
+    "chocolate",
+    "hot",
+    "bars",
+    "cookies",
+    "hot chocolate",
+    "bar",
+    "dark",
+    "butter"
+   ],
+   "share": 0.0674,
+   "template": "Sô-cô-la, bánh quy, bơ đậu phộng"
+  },
+  {
+   "keywords": [
+    "free",
+    "gluten",
+    "gluten free",
+    "wheat",
+    "cookies",
+    "flour",
+    "bread",
+    "mix"
+   ],
+   "share": 0.0327,
+   "template": "Sản phẩm không gluten, bột làm bánh"
+  }
+ ],
+ "e_t2_topics": [
+  {
+   "keywords": [
+    "old",
+    "work",
+    "away",
+    "new",
+    "day",
+    "quality",
+    "brand",
+    "china"
+   ],
+   "share": 0.1777,
+   "template": ""
+  },
+  {
+   "keywords": [
+    "box",
+    "received",
+    "arrived",
+    "package",
+    "packaging",
+    "broken",
+    "opened",
+    "cans"
+   ],
+   "share": 0.1502,
+   "template": "Hàng cũ, hết hạn, bao bì hỏng khi nhận"
+  },
+  {
+   "keywords": [
+    "price",
+    "worth",
+    "expensive",
+    "shipping",
+    "99",
+    "pay",
+    "00",
+    "cost"
+   ],
+   "share": 0.0818,
+   "template": "Giá cao so với cửa hàng, phí giao hàng"
+  },
+  {
+   "keywords": [
+    "sugar",
+    "ingredients",
+    "corn",
+    "syrup",
+    "sweet",
+    "corn syrup",
+    "ingredient",
+    "high"
+   ],
+   "share": 0.1078,
+   "template": "Thành phần: đường, siro ngô, không tự nhiên"
+  },
+  {
+   "keywords": [
+    "flavor",
+    "weak",
+    "flavors",
+    "strong",
+    "hot",
+    "little",
+    "flavored",
+    "love"
+   ],
+   "share": 0.1442,
+   "template": ""
+  },
+  {
+   "keywords": [
+    "taste",
+    "tastes",
+    "bitter",
+    "tasted",
+    "smell",
+    "sweet",
+    "yuck",
+    "taste taste"
+   ],
+   "share": 0.1448,
+   "template": "Hương vị, mùi, kết cấu không ngon"
+  },
+  {
+   "keywords": [
+    "date",
+    "stale",
+    "expiration",
+    "expiration date",
+    "old",
+    "expired",
+    "fresh",
+    "months"
+   ],
+   "share": 0.0444,
+   "template": "Hàng cũ, hết hạn, bao bì hỏng khi nhận"
+  },
+  {
+   "keywords": [
+    "eat",
+    "wo",
+    "salt",
+    "salty",
+    "hard",
+    "wo eat",
+    "dry",
+    "cheese"
+   ],
+   "share": 0.1031,
+   "template": ""
+  },
+  {
+   "keywords": [
+    "store",
+    "grocery",
+    "grocery store",
+    "local",
+    "local grocery",
+    "local store",
+    "buying",
+    "stores"
+   ],
+   "share": 0.046,
+   "template": "Giá cao so với cửa hàng, phí giao hàng"
+  }
+ ],
+ "delta": {
+  "npmi": -0.0377,
+  "diversity": -0.061,
+  "top20_product_share": -0.0283
+ },
+ "adopt": false,
+ "decision": "Giữ mô hình hiện tại: NPMI giảm, độ đa dạng giảm, chủ đề phân tán hơn theo sản phẩm"
+}
