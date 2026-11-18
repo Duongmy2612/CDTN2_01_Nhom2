@@ -12,9 +12,10 @@ Dashboard 9 tab đọc kết quả thật qua 20 API.
 
 ## 1. Chuẩn bị (≈ 10 phút)
 1. Cài Python 3.11, Node.js 22 LTS (hoặc Docker Desktop).
-2. Tải `Reviews.csv` từ Kaggle (Amazon Fine Food Reviews) vào `backend/data/raw/`
-   (MD5 `c3c950ae0be8b0736477c89d052d33fd`). Mẫu 100.000 dòng có sẵn ở `backend/data/sample/`
-   (tạo lại bằng `python scripts/make_sample.py`).
+2. **Dữ liệu** (không đưa lên GitHub vì dung lượng lớn – xem `.gitignore`): tải `Reviews.csv` từ Kaggle (Amazon Fine Food Reviews,
+   MD5 `c3c950ae0be8b0736477c89d052d33fd`) vào `backend/data/raw/` (tạo thư mục nếu chưa có), rồi tạo bộ mẫu 100.000 dòng
+   `backend/data/sample/reviews_sample_100k.csv` bằng `python scripts/make_sample.py` – hoặc chép file mẫu này từ gói mã nguồn nhóm nộp kèm.
+   Không có cả hai file vẫn chạy được: kéo thả bất kỳ file CSV đúng định dạng vào màn hình đầu.
 3. **Khóa Gemini (cho trợ lý AI):** sao chép `backend/.env.example` thành `backend/.env`, điền
    `GEMINI_API_KEY=<khóa của bạn>`, lưu file rồi khởi động lại backend. Hỗ trợ khóa Google AI Studio (`AIza…`)
    và khóa Vertex AI chế độ express (`AQ.…`) – backend tự nhận loại khóa và tự chọn model còn hoạt động.
