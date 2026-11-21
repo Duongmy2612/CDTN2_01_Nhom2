@@ -10,6 +10,18 @@ huấn luyện 3 mô hình (NB, Linear SVM, Logistic Regression) trên dữ li�
 chủ đề phàn nàn (NMF) → dự báo chỉ số hài lòng (ETS) → gắn mức rủi ro từng sản phẩm, kèm kiểm tra ngược quy tắc.
 Dashboard 9 tab đọc kết quả thật qua 20 API.
 
+## 0. Chạy nhanh bằng gói nộp kèm (khuyên dùng – từ bản 1.5.1)
+Gói `FoodReview_Insight_v1.5.1.zip` có sẵn giao diện đã dựng (`frontend/dist`), bộ mẫu 100.000 đánh giá và bộ kết quả demo
+(`demo_data/`: toàn bộ Reviews.csv đã xử lý, mô hình, kết quả trợ lý AI Gemini chạy ngày 07/11). Chỉ cần Python 3.11:
+1. Giải nén → nhấp đúp `chay_ung_dung.bat` (Windows) / `chay_ung_dung.command` (macOS) hoặc chạy `./chay_ung_dung.sh` (Linux).
+2. Lần đầu script tự tạo `.venv`, cài `backend/requirements.txt` (tải khoảng 140 MB), chép bộ kết quả demo vào `backend/`;
+   khi cửa sổ báo “Sẵn sàng … http://localhost:8000” thì trình duyệt tự mở dashboard. Lần sau mở được sau khoảng 10 giây.
+3. Giao diện và API chạy chung một cổng (`http://localhost:8000`, tài liệu API ở `/docs`) – không cần Node.js, không cần mạng
+   sau lần cài đầu, không cần khóa Gemini (trợ lý AI đọc kết quả đã lưu, chatbot trả lời theo quy tắc).
+
+Hướng dẫn cho người không lập trình, cách khôi phục bộ kết quả demo và xử lý sự cố: `HUONG_DAN_CAI_DAT.md`.
+Chạy từ mã nguồn trên GitHub (không có `demo_data/`): làm mục 1 rồi `python run_app.py` – script tự dựng giao diện nếu máy có Node.js.
+
 ## 1. Chuẩn bị (≈ 10 phút)
 1. Cài Python 3.11, Node.js 22 LTS (hoặc Docker Desktop).
 2. **Dữ liệu** (không đưa lên GitHub vì dung lượng lớn – xem `.gitignore`): tải `Reviews.csv` từ Kaggle (Amazon Fine Food Reviews,
@@ -36,6 +48,9 @@ cd frontend && npm ci && npm run dev                        # cửa sổ thứ h
 Mở http://localhost:5173 → chọn “Mẫu 100.000 đánh giá” (≈ 2–3 phút) hoặc “Toàn bộ Reviews.csv” (≈ 3–4 phút),
 hoặc kéo thả file CSV của bạn. Kết quả lưu ở `backend/data/processed`, `backend/models`, `backend/cache` và được nạp lại
 khi khởi động máy chủ, nên lần sau mở ứng dụng vào thẳng dashboard.
+
+Hoặc một lệnh, một cổng (bản 1.5.1): `python run_app.py` – tạo `.venv`, cài thư viện, dựng giao diện (`npm run build`) nếu
+chưa có, rồi chạy giao diện + API ở http://localhost:8000 (xem mục 0).
 
 Cũng có thể gọi API trực tiếp: `curl -X POST "http://localhost:8000/api/data/sample?kind=full"` rồi theo dõi
 `GET /api/jobs/{job_id}`.
@@ -66,7 +81,7 @@ Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05; 06 (
 ```bash
 pytest backend/tests -q
 ```
-121 ca kiểm thử (10 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
+126 ca kiểm thử (11 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
 (`pytest.ini` ở thư mục gốc đã khai báo `pythonpath = .` nên chạy thẳng lệnh trên, không cần cài gói):
 đủ 20 API, định dạng lỗi, quy tắc làm sạch R1–R9 trên file có lỗi (UserId trống, Score sai, Text rỗng, bản ghi trùng),
 pipeline 7 bước, mọi API trả dữ liệu đúng lược đồ, kiểm tra theo thời gian (giai đoạn học trước giai đoạn kiểm tra),
@@ -85,6 +100,8 @@ Từ bản 1.5.0 thêm 41 ca kiểm thử hồi quy cho các lỗi tìm được
 `test_upload_robustness.py` (dấu phân cách `;` tab `|`, bảng mã cp1252, BOM, tháng 13, tải file khi đang có job), `test_predict_robustness.py` (văn bản
 không có từ nào mô hình biết, đếm từ sau khi bỏ HTML, cờ độ tin cậy thấp), `test_frontend_robustness.py` (giao diện hiển thị
 cảnh báo kiểm tra file, bộ đếm từ khớp máy chủ).
+Bản 1.5.1 thêm `test_packaging.py` (5 ca): backend phục vụ giao diện đã dựng ở cùng cổng mà không che `/api`, `/docs`, API không
+có vẫn trả 404 dạng JSON, không đọc được tệp ngoài `frontend/dist`, file chạy `.bat` xuống dòng CRLF và chỉ dùng ký tự ASCII.
 Kiểm thử không bao giờ dùng khóa thật trong `backend/.env` (conftest đặt khóa rỗng trước khi nạp ứng dụng).
 CI trên GitHub (`.github/workflows/ci.yml`) chạy lại `pytest` và `npm run build` mỗi lần mở pull request vào `main`.
 
@@ -110,7 +127,9 @@ kiểm thử cho 14 yêu cầu chức năng mức Must, so mỗi kết quả v�
 
 ## 7. Cấu trúc thư mục
 ```
-backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.5.0)
+run_app.py · chay_ung_dung.bat|.command|.sh · khoi_phuc_demo.bat|.command · HUONG_DAN_CAI_DAT.md   (bản đóng gói 1.5.1)
+demo_data/ processed · models · cache – bộ kết quả demo, chỉ có trong gói zip (không đưa lên GitHub)
+backend/   main.py · core/ (config, state, deps, errors, frontend) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.5.0)
            services/ data · eda · model · topic · forecast · alert · ai · report · pipeline
            data/ (raw, sample, processed) · models/ · cache/ · tests/
 frontend/  React 18 + Vite 5 + Tailwind 3 + Recharts · src/api/client.js ánh xạ 20 API · src/tabs/ (9 tab)
@@ -129,7 +148,7 @@ xanh; không đưa `backend/.env`, dữ liệu gốc, mô hình đã huấn luy�
 Sơ đồ trong tài liệu thiết kế: `python docs/diagrams/erd_build.py` (ERD) và
 `mmdc -i docs/diagrams/seq_upload.mmd -o docs/seq_upload.png -c docs/diagrams/mmd_config.json -s 2` (tương tự cho seq_predict).
 
-## 9. Thay đổi phiên bản 1.5.0 (buổi 8 – kiểm thử và tinh chỉnh)
+## 10. Thay đổi phiên bản 1.5.0 (buổi 8 – kiểm thử và tinh chỉnh)
 Nhóm kiểm thử ngoài luồng chính: 22 ca TC8, 22 file dữ liệu “xấu” (D01–D22), 40 lời gọi API với tham số biên/sai, 23 câu kiểm thử
 hành vi mô hình, đo thời gian 20 lần/API trên bộ đầy đủ (393.890 đánh giá). Tìm được 11 lỗi (B01–B11): đã sửa hết 4 lỗi mức Cao, 4 lỗi
 mức Trung bình và 3 lỗi Thấp; mỗi lỗi có ca kiểm thử hồi quy. Hợp đồng API 1.4.0 → 1.5.0: chỉ thêm mã lỗi, cảnh báo, trường tùy
@@ -152,7 +171,7 @@ chọn `low_confidence` và siết mẫu tháng – không đổi tên hay xóa 
   đếm giống máy chủ; nhãn “Độ tin cậy thấp”; chip tiếng Việt đổi thành “Tiếng Việt (ngoài phạm vi)”; tab Tổng quan ghi các chỉnh
   sửa tự động khi làm sạch.
 
-## 10. Thay đổi phiên bản 1.4.0 (sprint xây dựng 2 – buổi 7: tích hợp các mô-đun)
+## 11. Thay đổi phiên bản 1.4.0 (sprint xây dựng 2 – buổi 7: tích hợp các mô-đun)
 Hợp đồng API 1.3.0 → 1.4.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại. Nhóm chạy cả
 luồng trên bộ mẫu, đối chiếu cùng một con số trên mọi màn hình (`scripts/integration_check.py`): bản 1.3.0 khớp 13/17,
 lệch ở 4 chỗ dưới đây; bản 1.4.0 khớp 17/17.
@@ -172,7 +191,7 @@ lệch ở 4 chỗ dưới đây; bản 1.4.0 khớp 17/17.
 - **Kiểm tra tích hợp, quy trình Git (Dương Diễm My):** `scripts/integration_check.py` + `backend/tests/test_integration.py`;
   chuyển sang kho `CDTN2_01_Nhom2`, mỗi thành viên một nhánh (`CONTRIBUTING.md`, mẫu pull request).
 
-## 11. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
+## 12. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
 Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Trợ lý AI – kiểm tra độ đầy đủ của giải pháp (PB-19):** hành động Gemini trả về phải ≥ 8 từ, không kết thúc bằng từ nối
   (“và”, “của”, “dòng”…), chỉ số theo dõi ≥ 4 từ. Thiếu ý → gọi lại 1 lần kèm danh sách giải pháp cần viết lại (tối đa 3 lần gọi
@@ -193,7 +212,7 @@ Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tươn
 - **Kiểm thử chấp nhận FR Must** (`scripts/acceptance_test.py`, mục 6) và **CI GitHub Actions**; quy trình Git trong `CONTRIBUTING.md`;
   `.gitattributes` thống nhất ký tự xuống dòng giữa máy Windows và Linux.
 
-## 12. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
+## 13. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
 Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và bảng xuất mới nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Cảnh báo sản phẩm:** thêm trường `signal` – `decline` (điểm TB 3 tháng giảm ≥ 0,25 sao, tức “bị đánh giá thấp dần”) hoặc
   `negative` (điểm không giảm nhưng tỷ lệ tiêu cực cao kéo dài); lý do ghi rõ loại tín hiệu. Sắp theo mức rủi ro: trong cùng mức,
@@ -218,7 +237,7 @@ Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và b�
 - **Thời gian xử lý** tăng do có thêm kiểm tra theo thời gian: mẫu 100.000 dòng ≈ 2–3 phút, toàn bộ Reviews.csv ≈ 3–4 phút
   (đo trên máy chạy thử: 163 giây và 235 giây).
 
-## 13. Nhóm thực hiện
+## 14. Nhóm thực hiện
 | Thành viên | Nhánh | Phần phụ trách chính |
 |---|---|---|
 | Dương Diễm My (nhóm trưởng) | `diemmy` | EDA, làm sạch R1–R9, DataService/EdaService; quy trình Git; kiểm thử chấp nhận, kiểm tra tích hợp; README, demo |

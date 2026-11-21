@@ -2,6 +2,7 @@
 
 Chạy:  uvicorn backend.main:app --reload --port 8000   (từ thư mục gốc dự án)
 Tài liệu API tự sinh: http://localhost:8000/docs
+Từ bản 1.5.1: nếu đã có frontend/dist (npm run build) thì giao diện cũng ở http://localhost:8000 – xem run_app.py.
 """
 from contextlib import asynccontextmanager
 
@@ -16,6 +17,7 @@ from backend.core import config as C
 load_dotenv(C.BASE_DIR / ".env")   # GEMINI_API_KEY – không đưa .env lên GitHub (NFR-05)
 
 from backend.core.errors import ApiError  # noqa: E402
+from backend.core.frontend import register_frontend  # noqa: E402
 from backend.core.state import STATE  # noqa: E402
 from backend.routers import ai, analytics, forecast, model, predict, report, upload  # noqa: E402
 from backend.schemas.api import API_CONTRACT_VERSION, HealthResponse  # noqa: E402
@@ -85,3 +87,6 @@ def health():
 
 for r in (upload.router, analytics.router, model.router, predict.router, forecast.router, ai.router, report.router):
     app.include_router(r, prefix="/api")
+
+# buổi 9 (v1.5.1): có frontend/dist thì phục vụ giao diện ở cùng cổng – đăng ký sau cùng để không che /api, /docs
+FRONTEND_BUNDLED = register_frontend(app, C.FRONTEND_DIST)

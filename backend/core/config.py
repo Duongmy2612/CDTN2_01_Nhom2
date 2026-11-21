@@ -15,6 +15,8 @@ CACHE_DIR = BASE_DIR / "cache"
 if os.getenv("FRI_WORK_DIR"):                            # kiểm thử: ghi kết quả vào thư mục tạm, không đụng dữ liệu thật
     _W = Path(os.environ["FRI_WORK_DIR"])
     DATA_PROCESSED, MODELS_DIR, CACHE_DIR = _W / "processed", _W / "models", _W / "cache"
+# buổi 9 (v1.5.1): giao diện đã dựng (npm run build) – có thì backend phục vụ luôn, chạy một cổng không cần Node.js
+FRONTEND_DIST = Path(os.getenv("FRI_FRONTEND_DIST") or BASE_DIR.parent / "frontend" / "dist")
 
 RANDOM_STATE = 42                     # NFR-08: cố định để tái lập kết quả
 
