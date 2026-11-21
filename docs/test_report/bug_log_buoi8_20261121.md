@@ -2,7 +2,7 @@
 
 Phiên bản kiểm thử: 1.4.0 (nhánh main a00492e) → bản sửa 1.5.0. Ngày 21/11/2026. Dữ liệu: bộ tổng hợp (pytest), mẫu 100.000 dòng, toàn bộ Reviews.csv (393.890 đánh giá sạch), 22 file dữ liệu “xấu” D01–D22.
 
-Tổng: 11 lỗi – Cao 4, Trung bình 4, Thấp 3; đã sửa 11/11. Mỗi lỗi có ca kiểm thử hồi quy trong backend/tests; chạy các ca này trên 1.4.0 thì 34/39 ca thất bại, trên 1.5.0 đạt hết.
+Tổng: 11 lỗi – Cao 4, Trung bình 4, Thấp 3; đã sửa 11/11. Mỗi lỗi có ca kiểm thử hồi quy trong backend/tests; chạy 41 ca hồi quy mới trên 1.4.0 thì 35/41 ca thất bại, trên 1.5.0 đạt hết.
 
 ## Mức độ nghiêm trọng
 

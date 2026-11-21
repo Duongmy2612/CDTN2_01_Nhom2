@@ -66,7 +66,7 @@ Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05; 06 (
 ```bash
 pytest backend/tests -q
 ```
-119 ca kiểm thử (10 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
+121 ca kiểm thử (10 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
 (`pytest.ini` ở thư mục gốc đã khai báo `pythonpath = .` nên chạy thẳng lệnh trên, không cần cài gói):
 đủ 20 API, định dạng lỗi, quy tắc làm sạch R1–R9 trên file có lỗi (UserId trống, Score sai, Text rỗng, bản ghi trùng),
 pipeline 7 bước, mọi API trả dữ liệu đúng lược đồ, kiểm tra theo thời gian (giai đoạn học trước giai đoạn kiểm tra),
@@ -80,9 +80,9 @@ Từ bản 1.4.0 thêm kiểm thử tích hợp (buổi 7): `test_frontend_contr
 (đường dẫn, tên tham số, trường thân yêu cầu, giới hạn page_size, tên biểu đồ, tên bảng CSV – 43 ca sinh theo từng lời gọi
 trong giao diện); `test_integration.py` kiểm tra cùng một con số giống nhau trên mọi màn hình; `test_predict_topics.py`,
 `test_smoke_partial.py` cho các sửa đổi của sprint xây dựng 2; `test_acceptance.py` chạy kiểm thử chấp nhận FR Must (buổi 6).
-Từ bản 1.5.0 thêm 39 ca kiểm thử hồi quy cho các lỗi tìm được ở buổi 8 (mỗi lỗi B01–B11 có ít nhất một ca, chạy trên 1.4.0 thì
-34/39 ca thất bại): `test_data_robustness.py` (Time mili-giây, Id trùng/không phải số, file chỉ có tiêu đề, chỉ mục từ khóa),
-`test_upload_robustness.py` (dấu phân cách `;` tab `|`, bảng mã cp1252, BOM, tháng 13), `test_predict_robustness.py` (văn bản
+Từ bản 1.5.0 thêm 41 ca kiểm thử hồi quy cho các lỗi tìm được ở buổi 8 (mỗi lỗi B01–B11 có ít nhất một ca, chạy trên 1.4.0 thì
+35/41 ca thất bại): `test_data_robustness.py` (Time mili-giây, Id trùng/không phải số, file chỉ có tiêu đề, chỉ mục từ khóa),
+`test_upload_robustness.py` (dấu phân cách `;` tab `|`, bảng mã cp1252, BOM, tháng 13, tải file khi đang có job), `test_predict_robustness.py` (văn bản
 không có từ nào mô hình biết, đếm từ sau khi bỏ HTML, cờ độ tin cậy thấp), `test_frontend_robustness.py` (giao diện hiển thị
 cảnh báo kiểm tra file, bộ đếm từ khớp máy chủ).
 Kiểm thử không bao giờ dùng khóa thật trong `backend/.env` (conftest đặt khóa rỗng trước khi nạp ứng dụng).
@@ -130,16 +130,16 @@ Sơ đồ trong tài liệu thiết kế: `python docs/diagrams/erd_build.py` (E
 `mmdc -i docs/diagrams/seq_upload.mmd -o docs/seq_upload.png -c docs/diagrams/mmd_config.json -s 2` (tương tự cho seq_predict).
 
 ## 9. Thay đổi phiên bản 1.5.0 (buổi 8 – kiểm thử và tinh chỉnh)
-Nhóm kiểm thử ngoài luồng chính: 22 file dữ liệu “xấu” (D01–D22), 40 lời gọi API với tham số biên/sai, 15 câu kiểm thử hành vi
-mô hình, đo thời gian 20 lần/API trên bộ đầy đủ (393.890 đánh giá). Tìm được 11 lỗi (B01–B11): đã sửa hết 4 lỗi mức Cao và 5 lỗi
-mức Trung bình, 2 lỗi Thấp; mỗi lỗi có ca kiểm thử hồi quy. Hợp đồng API 1.4.0 → 1.5.0: chỉ thêm mã lỗi, cảnh báo, trường tùy
+Nhóm kiểm thử ngoài luồng chính: 22 ca TC8, 22 file dữ liệu “xấu” (D01–D22), 40 lời gọi API với tham số biên/sai, 23 câu kiểm thử
+hành vi mô hình, đo thời gian 20 lần/API trên bộ đầy đủ (393.890 đánh giá). Tìm được 11 lỗi (B01–B11): đã sửa hết 4 lỗi mức Cao, 4 lỗi
+mức Trung bình và 3 lỗi Thấp; mỗi lỗi có ca kiểm thử hồi quy. Hợp đồng API 1.4.0 → 1.5.0: chỉ thêm mã lỗi, cảnh báo, trường tùy
 chọn `low_confidence` và siết mẫu tháng – không đổi tên hay xóa trường nào.
 - **Dữ liệu đầu vào (Dương Diễm My):** cột Time ghi bằng mili-giây làm cả pipeline dừng (OutOfBoundsDatetime) → tự nhận đơn vị
   theo trung vị, đổi sang giây, cảnh báo `TIME_MILLISECONDS` (B01); vài dòng Time âm/quá lớn làm hỏng cả file → bỏ đúng các
   dòng đó theo R2, cảnh báo `INVALID_TIME_ROWS` (B02); Id không phải số → lỗi ValueError, Id trùng → `review_id` trùng làm sai
   bằng chứng của trợ lý AI → đánh số lại, cảnh báo `ID_RENUMBERED` (B03, B04); file chỉ có dòng tiêu đề báo nhầm “Score không
   hợp lệ” → `NO_ROWS` (B07). Biểu đồ từ khóa có bộ lọc mất 2,1–2,4 giây trên bộ đầy đủ (vượt NFR-02) → chỉ mục từ khóa dựng
-  một lần ở luồng nền khi khởi động/xử lý xong, mỗi lần lọc 0,05–0,13 giây (B10).
+  một lần ở luồng nền ngay khi xử lý xong và lưu đĩa (khởi động lại chỉ nạp lại), mỗi lần lọc ≈ 0,07 giây (B10).
 - **API tải file, tham số (Nguyễn Hoàng Thuận):** file Excel xuất bằng dấu `;` bị báo “Thiếu cột Score, Time, Text” → tự nhận
   dấu phân cách `, ; tab |` theo dòng tiêu đề, cảnh báo `DELIMITER_DETECTED` (B05); file cp1252/Latin-1 bị lỗi khó hiểu → đọc lại
   theo bảng mã dự phòng, cảnh báo `ENCODING_FALLBACK` (B06); tháng `2010-13` được chấp nhận → mẫu `yyyy-mm` tháng 01–12, thông

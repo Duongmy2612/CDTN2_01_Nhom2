@@ -5,7 +5,7 @@
 | Mã | UC/FR | Loại | Bước – dữ liệu vào | Kết quả mong đợi | 1.4.0 | 1.5.0 | Người kiểm | Lỗi |
 |---|---|---|---|---|---|---|---|---|
 | TC8-01 | UC-01 · FR-01–06 · NFR-01 | Luồng chính | Trang Chọn dữ liệu → “Mẫu 100.000 đánh giá”; chờ job 7 bước; mở dashboard | Job xong ≤ 3 phút, 7/7 bước “done”, dashboard có số liệu | Đạt | Đạt – 169 giây; 27/27 lời gọi API | Kaysone |  |
-| TC8-02 | UC-01 · FR-01 | Ngoại lệ dữ liệu | Tải D05: 2.000 dòng, cột Time ghi bằng mili-giây | Nhận file, đổi sang giây, báo cho người dùng | SAI – job thất bại “OutOfBoundsDatetime” | Đạt – cảnh báo, xử lý xong | Huy | B01 |
+| TC8-02 | UC-01 · FR-01 | Ngoại lệ dữ liệu | Tải D05: cột Time ghi bằng mili-giây (kiểu xuất từ JavaScript/Java) | Nhận file, đổi sang giây, báo cho người dùng | SAI – job thất bại “OutOfBoundsDatetime” | Đạt – cảnh báo, xử lý xong | Huy | B01 |
 | TC8-03 | UC-01 · FR-02 | Ngoại lệ dữ liệu | Tải D21: 21/2.000 dòng Time âm hoặc quá lớn | Bỏ đúng 21 dòng theo R2, xử lý tiếp | SAI – cả job thất bại | Đạt – loại 21 dòng, có cảnh báo | Huy | B02 |
 | TC8-04 | UC-01 · FR-02 | Ngoại lệ dữ liệu | Tải D18 (Id dạng “R1…”) và D20 (mọi Id = 1) | Xử lý xong, mã đánh giá duy nhất | SAI – D18 thất bại ValueError; D20 “xong” nhưng review_id trùng | Đạt – đánh số lại, cảnh báo | Huy | B03, B04 |
 | TC8-05 | UC-01 · FR-01 | Ngoại lệ dữ liệu | Tải D07: CSV dùng dấu “;” (Excel bản tiếng Việt) | Tự nhận dấu phân cách | SAI – báo “Thiếu cột Score, Time, Text” | Đạt – nhận dấu “;”, có cảnh báo | Kaysone | B05 |
@@ -16,7 +16,7 @@
 | TC8-10 | UC-02 · FR-07–09 | Luồng chính | Bộ đầy đủ: lọc 01/2011 – 12/2011 + Tiêu cực; xem KPI và 5 biểu đồ; đổi tab | Số liệu khớp phép tính pandas; cùng chỉ số giống nhau trên mọi màn hình | Đạt | Đạt – 17/17 đối chiếu (mẫu và đầy đủ) | Thuận |  |
 | TC8-11 | UC-02 · FR-09 | Giá trị biên | Gọi API với date_from = 2010-13, 2011-00, 2011-1 | 422, thông điệp tiếng Việt rõ | SAI – 2010-13 trả 200 | Đạt – 422 “yyyy-mm, tháng 01–12” | Thuận | B11 |
 | TC8-12 | UC-02 · NFR-02 | Hiệu năng | Bộ đầy đủ: biểu đồ Từ khóa đặc trưng lọc năm 2011, gọi 20 lần | Trung bình ≤ 2 giây | SAI – TB 2,06 giây | Đạt – TB 0,07 giây | Thuận | B10 |
-| TC8-13 | UC-04 · FR-14–16 | Luồng chính | Nhập 3 đánh giá tiếng Anh: chê rõ, khen rõ, trung tính | Đúng nhóm cảm xúc; có từ ảnh hưởng; ≤ 1 giây | Đạt | Đạt – 9,9 ms/lần | My |  |
+| TC8-13 | UC-04 · FR-14–16 | Luồng chính | Nhập 3 đánh giá tiếng Anh: chê rõ, khen rõ, trung tính | Đúng nhóm cảm xúc; có từ ảnh hưởng; ≤ 1 giây | Đạt | Đạt – ≈ 10 ms/lần | My |  |
 | TC8-14 | UC-04 · FR-14 | Ngoại lệ dữ liệu | Nhập câu tiếng Việt “Cà phê rất dở, hộp bị móp…” | Từ chối, hướng dẫn nhập tiếng Anh | SAI – “1 sao” nhưng “Tích cực 49 %” | Đạt – 422 TEXT_NOT_RECOGNIZED | My | B08 |
 | TC8-15 | UC-04 · FR-14 | Giá trị biên | Nhập “<br> <br> <br>” và “http://a.com www.b.com nice” | Báo cần ≥ 3 từ | SAI – vẫn dự đoán | Đạt – TEXT_TOO_SHORT; nút Dự đoán không bật | My | B09 |
 | TC8-16 | UC-04 · FR-14 | Giá trị biên | Câu vừa khen vừa chê “Love the flavor but the bag was half empty…” | Kết quả kèm cảnh báo không chắc chắn | Một phần – không cảnh báo | Đạt – nhãn “Độ tin cậy thấp” (43 %) | My | tinh chỉnh |
