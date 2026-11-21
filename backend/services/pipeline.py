@@ -166,6 +166,9 @@ def _run_locked(job: dict, raw: pd.DataFrame) -> None:
             STATE.model, STATE.registry, STATE.predictions = bundle, registry, pred
             STATE.topic_model, STATE.topics, STATE.review_topics = tb, (topics or None), (rt if tb is not None else None)
             STATE.forecast, STATE.products, STATE.risk_backtest = fo, prod, rbt
+        # buổi 8 (B10): chỉ mục từ khóa cho biểu đồ có bộ lọc dựng ở luồng nền SAU khi job xong (≈ 4,5 giây) rồi lưu đĩa – không làm
+        # chậm job (NFR-01: dựng trong job hoặc song song với bước huấn luyện đều làm job mẫu 100.000 dòng chậm thêm 5–10 giây)
+        EDA.keyword_index(STATE)
         sel = registry["selected_metrics"]
         job["summary"] = {"n_raw": meta["n_rows_raw"], "n_clean": meta["n_reviews"], "n_products": meta["n_products"],
                           "n_users": meta["n_users"], "date_min": meta["date_min"], "date_max": meta["date_max"],

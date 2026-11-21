@@ -28,6 +28,7 @@ FILES = {
     "registry": C.MODELS_DIR / "model_registry.json",
     "model": C.MODELS_DIR / "model_bundle.joblib",
     "topic_model": C.MODELS_DIR / "topic_bundle.joblib",
+    "kw_index": C.MODELS_DIR / "keyword_index.joblib",       # buổi 8: chỉ mục từ khóa cho biểu đồ có bộ lọc (NFR-02)
     "ai_cache": C.CACHE_DIR / "ai_insights.json",
 }
 

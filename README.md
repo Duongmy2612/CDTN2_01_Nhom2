@@ -66,7 +66,7 @@ Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05; 06 (
 ```bash
 pytest backend/tests -q
 ```
-80 ca kiểm thử (6 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
+119 ca kiểm thử (10 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
 (`pytest.ini` ở thư mục gốc đã khai báo `pythonpath = .` nên chạy thẳng lệnh trên, không cần cài gói):
 đủ 20 API, định dạng lỗi, quy tắc làm sạch R1–R9 trên file có lỗi (UserId trống, Score sai, Text rỗng, bản ghi trùng),
 pipeline 7 bước, mọi API trả dữ liệu đúng lược đồ, kiểm tra theo thời gian (giai đoạn học trước giai đoạn kiểm tra),
@@ -80,6 +80,11 @@ Từ bản 1.4.0 thêm kiểm thử tích hợp (buổi 7): `test_frontend_contr
 (đường dẫn, tên tham số, trường thân yêu cầu, giới hạn page_size, tên biểu đồ, tên bảng CSV – 43 ca sinh theo từng lời gọi
 trong giao diện); `test_integration.py` kiểm tra cùng một con số giống nhau trên mọi màn hình; `test_predict_topics.py`,
 `test_smoke_partial.py` cho các sửa đổi của sprint xây dựng 2; `test_acceptance.py` chạy kiểm thử chấp nhận FR Must (buổi 6).
+Từ bản 1.5.0 thêm 39 ca kiểm thử hồi quy cho các lỗi tìm được ở buổi 8 (mỗi lỗi B01–B11 có ít nhất một ca, chạy trên 1.4.0 thì
+34/39 ca thất bại): `test_data_robustness.py` (Time mili-giây, Id trùng/không phải số, file chỉ có tiêu đề, chỉ mục từ khóa),
+`test_upload_robustness.py` (dấu phân cách `;` tab `|`, bảng mã cp1252, BOM, tháng 13), `test_predict_robustness.py` (văn bản
+không có từ nào mô hình biết, đếm từ sau khi bỏ HTML, cờ độ tin cậy thấp), `test_frontend_robustness.py` (giao diện hiển thị
+cảnh báo kiểm tra file, bộ đếm từ khớp máy chủ).
 Kiểm thử không bao giờ dùng khóa thật trong `backend/.env` (conftest đặt khóa rỗng trước khi nạp ứng dụng).
 CI trên GitHub (`.github/workflows/ci.yml`) chạy lại `pytest` và `npm run build` mỗi lần mở pull request vào `main`.
 
@@ -89,6 +94,15 @@ python scripts/smoke_test.py --base http://localhost:5173        # gọi 27 lờ
 python scripts/integration_check.py --base http://localhost:5173 # 17 đối chiếu số liệu giữa các màn hình → integration_*.md
 ```
 
+**Đánh giá mô hình và kiểm thử hành vi (buổi 8)** – sau khi backend đã xử lý dữ liệu:
+```bash
+FRI_WORK_DIR=<thư mục dữ liệu của backend> python scripts/evaluate_models.py --kind full   # → docs/test_report/model_eval_*.md
+python scripts/behavior_check.py                                    # 15 câu MFT + 5 cặp INV + 3 cặp DIR → behavior_*.md
+```
+`evaluate_models.py` tính lại trên toàn bộ tập kiểm tra: P/R/F1 từng lớp, ma trận nhầm lẫn, độ chính xác theo nhóm (độ dài,
+năm, độ phổ biến sản phẩm, độ tự tin), nhóm lỗi tự động (phủ định, đảo ý “but”), sai số dự báo theo số bước, kiểm tra lùi dự
+báo theo sản phẩm, độ nâng (lift) của quy tắc cảnh báo, độ phủ từ khóa chủ đề.
+
 **Kiểm thử chấp nhận FR Must (biên bản kiểm thử):** `python scripts/acceptance_test.py` (bộ mẫu 100.000 dòng, ≈ 3 phút) hoặc
 `--full` (toàn bộ Reviews.csv, ≈ 5 phút). Script tải file qua API trong thư mục tạm (không đụng dữ liệu đang dùng), chạy 14 ca
 kiểm thử cho 14 yêu cầu chức năng mức Must, so mỗi kết quả với phép tính độc lập bằng pandas và ghi biên bản vào
@@ -96,13 +110,14 @@ kiểm thử cho 14 yêu cầu chức năng mức Must, so mỗi kết quả v�
 
 ## 7. Cấu trúc thư mục
 ```
-backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.4.0)
+backend/   main.py · core/ (config, state, deps, errors) · routers/ (7 router, 20 API) · schemas/api.py (hợp đồng API 1.5.0)
            services/ data · eda · model · topic · forecast · alert · ai · report · pipeline
            data/ (raw, sample, processed) · models/ · cache/ · tests/
 frontend/  React 18 + Vite 5 + Tailwind 3 + Recharts · src/api/client.js ánh xạ 20 API · src/tabs/ (9 tab)
 notebooks/ 01_eda · 02_model_baseline · 03_topic_baseline · 04_forecast_baseline · 05_risk_rule · 06_topic_e_t2 (+ figures/, outputs/)
 docs/      openapi.json · schema_sqlite.sql · erd.png · wireframes/ · screens/ · test_report/ (biên bản kiểm thử) · demo/ (kịch bản demo) · ai_batch/
 scripts/   make_sample.py · export_openapi.py · acceptance_test.py · run_ai_batch.py · nfr10_score.py · smoke_test.py · integration_check.py
+           evaluate_models.py · behavior_check.py (buổi 8)
 .github/   workflows/ci.yml (pytest + build) · pull_request_template.md (danh sách kiểm tra DoD)
 ```
 
@@ -114,7 +129,30 @@ xanh; không đưa `backend/.env`, dữ liệu gốc, mô hình đã huấn luy�
 Sơ đồ trong tài liệu thiết kế: `python docs/diagrams/erd_build.py` (ERD) và
 `mmdc -i docs/diagrams/seq_upload.mmd -o docs/seq_upload.png -c docs/diagrams/mmd_config.json -s 2` (tương tự cho seq_predict).
 
-## 9. Thay đổi phiên bản 1.4.0 (sprint xây dựng 2 – buổi 7: tích hợp các mô-đun)
+## 9. Thay đổi phiên bản 1.5.0 (buổi 8 – kiểm thử và tinh chỉnh)
+Nhóm kiểm thử ngoài luồng chính: 22 file dữ liệu “xấu” (D01–D22), 40 lời gọi API với tham số biên/sai, 15 câu kiểm thử hành vi
+mô hình, đo thời gian 20 lần/API trên bộ đầy đủ (393.890 đánh giá). Tìm được 11 lỗi (B01–B11): đã sửa hết 4 lỗi mức Cao và 5 lỗi
+mức Trung bình, 2 lỗi Thấp; mỗi lỗi có ca kiểm thử hồi quy. Hợp đồng API 1.4.0 → 1.5.0: chỉ thêm mã lỗi, cảnh báo, trường tùy
+chọn `low_confidence` và siết mẫu tháng – không đổi tên hay xóa trường nào.
+- **Dữ liệu đầu vào (Dương Diễm My):** cột Time ghi bằng mili-giây làm cả pipeline dừng (OutOfBoundsDatetime) → tự nhận đơn vị
+  theo trung vị, đổi sang giây, cảnh báo `TIME_MILLISECONDS` (B01); vài dòng Time âm/quá lớn làm hỏng cả file → bỏ đúng các
+  dòng đó theo R2, cảnh báo `INVALID_TIME_ROWS` (B02); Id không phải số → lỗi ValueError, Id trùng → `review_id` trùng làm sai
+  bằng chứng của trợ lý AI → đánh số lại, cảnh báo `ID_RENUMBERED` (B03, B04); file chỉ có dòng tiêu đề báo nhầm “Score không
+  hợp lệ” → `NO_ROWS` (B07). Biểu đồ từ khóa có bộ lọc mất 2,1–2,4 giây trên bộ đầy đủ (vượt NFR-02) → chỉ mục từ khóa dựng
+  một lần ở luồng nền khi khởi động/xử lý xong, mỗi lần lọc 0,05–0,13 giây (B10).
+- **API tải file, tham số (Nguyễn Hoàng Thuận):** file Excel xuất bằng dấu `;` bị báo “Thiếu cột Score, Time, Text” → tự nhận
+  dấu phân cách `, ; tab |` theo dòng tiêu đề, cảnh báo `DELIMITER_DETECTED` (B05); file cp1252/Latin-1 bị lỗi khó hiểu → đọc lại
+  theo bảng mã dự phòng, cảnh báo `ENCODING_FALLBACK` (B06); tháng `2010-13` được chấp nhận → mẫu `yyyy-mm` tháng 01–12, thông
+  điệp lỗi tiếng Việt (B11).
+- **Dự đoán (KAYSONE Souk Anong):** câu tiếng Việt (0 % từ mô hình biết) vẫn ra “1 sao – Tích cực 49 %” → 422
+  `TEXT_NOT_RECOGNIZED` (B08); `<br> <br> <br>` qua được điều kiện 3 từ → đếm từ sau khi làm sạch giống dữ liệu huấn luyện và
+  dự đoán trên văn bản đã làm sạch (B09). Tinh chỉnh từ phân tích lỗi: dự đoán có xác suất nhóm cao nhất < 50 % (trên tập kiểm
+  tra chỉ đúng ≈ 44 %) trả `low_confidence = true` kèm ghi chú. Thêm `scripts/evaluate_models.py`, `scripts/behavior_check.py`.
+- **Giao diện (Lê Gia Huy):** trang tải file hiển thị các cảnh báo kiểm tra file (trước đây bị bỏ qua); bộ đếm từ của tab Dự đoán
+  đếm giống máy chủ; nhãn “Độ tin cậy thấp”; chip tiếng Việt đổi thành “Tiếng Việt (ngoài phạm vi)”; tab Tổng quan ghi các chỉnh
+  sửa tự động khi làm sạch.
+
+## 10. Thay đổi phiên bản 1.4.0 (sprint xây dựng 2 – buổi 7: tích hợp các mô-đun)
 Hợp đồng API 1.3.0 → 1.4.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại. Nhóm chạy cả
 luồng trên bộ mẫu, đối chiếu cùng một con số trên mọi màn hình (`scripts/integration_check.py`): bản 1.3.0 khớp 13/17,
 lệch ở 4 chỗ dưới đây; bản 1.4.0 khớp 17/17.
@@ -134,7 +172,7 @@ lệch ở 4 chỗ dưới đây; bản 1.4.0 khớp 17/17.
 - **Kiểm tra tích hợp, quy trình Git (Dương Diễm My):** `scripts/integration_check.py` + `backend/tests/test_integration.py`;
   chuyển sang kho `CDTN2_01_Nhom2`, mỗi thành viên một nhánh (`CONTRIBUTING.md`, mẫu pull request).
 
-## 10. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
+## 11. Thay đổi phiên bản 1.3.0 (sprint xây dựng 1 – buổi 6)
 Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Trợ lý AI – kiểm tra độ đầy đủ của giải pháp (PB-19):** hành động Gemini trả về phải ≥ 8 từ, không kết thúc bằng từ nối
   (“và”, “của”, “dòng”…), chỉ số theo dõi ≥ 4 từ. Thiếu ý → gọi lại 1 lần kèm danh sách giải pháp cần viết lại (tối đa 3 lần gọi
@@ -155,7 +193,7 @@ Hợp đồng API 1.2.0 → 1.3.0, chỉ thêm trường tùy chọn nên tươn
 - **Kiểm thử chấp nhận FR Must** (`scripts/acceptance_test.py`, mục 6) và **CI GitHub Actions**; quy trình Git trong `CONTRIBUTING.md`;
   `.gitattributes` thống nhất ký tự xuống dòng giữa máy Windows và Linux.
 
-## 11. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
+## 12. Thay đổi phiên bản 1.2.0 (sau buổi demo 5)
 Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và bảng xuất mới nên tương thích ngược; `docs/openapi.json` đã xuất lại.
 - **Cảnh báo sản phẩm:** thêm trường `signal` – `decline` (điểm TB 3 tháng giảm ≥ 0,25 sao, tức “bị đánh giá thấp dần”) hoặc
   `negative` (điểm không giảm nhưng tỷ lệ tiêu cực cao kéo dài); lý do ghi rõ loại tín hiệu. Sắp theo mức rủi ro: trong cùng mức,
@@ -180,7 +218,7 @@ Hợp đồng API 1.1.0 → 1.2.0, chỉ bổ sung trường tùy chọn và b�
 - **Thời gian xử lý** tăng do có thêm kiểm tra theo thời gian: mẫu 100.000 dòng ≈ 2–3 phút, toàn bộ Reviews.csv ≈ 3–4 phút
   (đo trên máy chạy thử: 163 giây và 235 giây).
 
-## 12. Nhóm thực hiện
+## 13. Nhóm thực hiện
 | Thành viên | Nhánh | Phần phụ trách chính |
 |---|---|---|
 | Dương Diễm My (nhóm trưởng) | `diemmy` | EDA, làm sạch R1–R9, DataService/EdaService; quy trình Git; kiểm thử chấp nhận, kiểm tra tích hợp; README, demo |

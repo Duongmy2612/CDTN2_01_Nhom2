@@ -20,6 +20,39 @@ _URL_RE = re.compile(r"(https?://\S+|www\.\S+)")
 _WS_RE = re.compile(r"\s+")
 _NEG_RE = re.compile(r"n't\b")
 
+# Buổi 8 – khoảng thời gian hợp lệ của cột Time (Unix timestamp, giây). Ngoài khoảng: dòng bị loại theo R2,
+# trước đây một vài dòng sai (âm, quá lớn) làm cả job dừng với lỗi OutOfBoundsDatetime.
+TIME_MIN = 788_918_400                  # 01/01/1995 – trước khi có đánh giá trực tuyến trên Amazon
+_MS_MEDIAN = 1e11                       # trung vị > 1e11 → file ghi Time bằng mili-giây (năm 5138 nếu hiểu là giây)
+
+
+def normalize_time(t: pd.Series) -> tuple[pd.Series, dict]:
+    """Đổi cột Time về giây; giá trị không phải số hoặc ngoài [1995, hiện tại + 1 ngày] → NaN.
+
+    Trả về (chuỗi giây dạng float, {"unit": "s" | "ms", "n_out_of_range": k}). Dùng chung cho FR-02 (kiểm tra),
+    FR-03 (báo cáo chất lượng) và R2 (làm sạch) để ba bước cùng một cách hiểu.
+    """
+    x = pd.to_numeric(t, errors="coerce").astype(float)
+    pos = x[x > 0]
+    unit = "ms" if len(pos) and float(pos.median()) > _MS_MEDIAN else "s"
+    if unit == "ms":
+        x = x / 1000.0
+    hi = pd.Timestamp.now().timestamp() + 86_400
+    bad = x.notna() & ((x < TIME_MIN) | (x > hi))
+    return x.where(~bad), {"unit": unit, "n_out_of_range": int(bad.sum())}
+
+
+def normalize_ids(ids: pd.Series | None, n: int) -> tuple[np.ndarray, bool]:
+    """review_id phải là số nguyên duy nhất (bằng chứng của trợ lý AI, bảng dự đoán đều tra theo mã này).
+
+    Id không phải số, bị trống hoặc trùng → đánh số lại 1..n theo thứ tự dòng trong file, trả cờ renumbered.
+    """
+    if ids is not None:
+        v = pd.to_numeric(ids, errors="coerce")
+        if v.notna().all() and (v % 1 == 0).all() and v.is_unique:
+            return v.astype("int64").values, False
+    return np.arange(1, n + 1, dtype="int64"), ids is not None
+
 
 # --------------------------------------------------------------------------- #
 # FR-02 – kiểm tra cấu trúc
@@ -36,6 +69,9 @@ def validate_schema(df: pd.DataFrame) -> dict:
         errors.append({"code": "MISSING_COLUMN", "columns": missing,
                        "message": f"Thiếu cột bắt buộc: {', '.join(missing)}"})
         return {"ok": False, "errors": errors, "warnings": warnings}
+    if len(df) == 0:
+        errors.append({"code": "NO_ROWS", "message": "File chỉ có dòng tiêu đề, không có đánh giá nào"})
+        return {"ok": False, "errors": errors, "warnings": warnings}
     score = pd.to_numeric(df["Score"], errors="coerce")
     bad_score = int((~score.isin([1, 2, 3, 4, 5])).sum())
     if bad_score == len(df):
@@ -43,9 +79,19 @@ def validate_schema(df: pd.DataFrame) -> dict:
     elif bad_score:
         warnings.append({"code": "INVALID_SCORE_ROWS", "rows": bad_score,
                          "message": f"{bad_score} dòng có Score ngoài 1–5 sẽ bị loại"})
-    t = pd.to_numeric(df["Time"], errors="coerce")
+    t, ti = normalize_time(df["Time"])
     if t.isna().all():
-        errors.append({"code": "INVALID_TIME", "message": "Cột Time không phải Unix timestamp"})
+        errors.append({"code": "INVALID_TIME", "message": "Cột Time không có giá trị hợp lệ – cần Unix timestamp (giây hoặc mili-giây) "
+                                                          "trong khoảng 1995 đến nay"})
+    else:
+        if ti["unit"] == "ms":
+            warnings.append({"code": "TIME_MILLISECONDS", "message": "Cột Time ghi bằng mili-giây – hệ thống đã tự đổi sang giây"})
+        n_bad_t = int(t.isna().sum())
+        if n_bad_t:
+            warnings.append({"code": "INVALID_TIME_ROWS", "rows": n_bad_t,
+                             "message": f"{n_bad_t} dòng có Time trống hoặc ngoài khoảng 1995 – nay sẽ bị loại"})
+    if "Id" in df.columns and normalize_ids(df["Id"], len(df))[1]:
+        warnings.append({"code": "ID_RENUMBERED", "message": "Cột Id có giá trị không phải số hoặc bị trùng – hệ thống đánh số lại mã đánh giá"})
     opt_missing = [c for c in C.OPTIONAL_COLUMNS if c not in df.columns]
     if opt_missing:
         warnings.append({"code": "MISSING_OPTIONAL", "columns": opt_missing,
@@ -58,7 +104,7 @@ def validate_schema(df: pd.DataFrame) -> dict:
 # --------------------------------------------------------------------------- #
 def quality_report(df: pd.DataFrame, n_preview: int = 20) -> dict:
     keys = [k for k in C.DEDUP_KEYS if k in df.columns]
-    t = pd.to_datetime(pd.to_numeric(df["Time"], errors="coerce"), unit="s")
+    t = pd.to_datetime(normalize_time(df["Time"])[0], unit="s")
     rep = {
         "n_rows": int(len(df)),
         "n_columns": int(df.shape[1]),
@@ -104,12 +150,17 @@ def clean_reviews(raw: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     """Áp dụng quy tắc R1–R9, trả về (DataFrame sạch, nhật ký số dòng bị loại)."""
     log = {"n_raw": int(len(raw))}
     df = raw.copy()
+    # Id không phải số, trống hoặc trùng → đánh số lại theo thứ tự dòng trong file (buổi 8; trước đây lỗi ValueError,
+    # hoặc review_id trùng nhau làm sai bằng chứng của trợ lý AI và bảng dự đoán)
+    df["Id"], renum = normalize_ids(df["Id"] if "Id" in df.columns else None, len(df))
+    log["id_renumbered"] = int(renum)
     # R1 – Score hợp lệ 1..5
     df["Score"] = pd.to_numeric(df["Score"], errors="coerce")
     m = df["Score"].isin([1, 2, 3, 4, 5]); log["r1_invalid_score"] = int((~m).sum()); df = df[m]
-    # R2 – Time hợp lệ
-    df["Time"] = pd.to_numeric(df["Time"], errors="coerce")
+    # R2 – Time hợp lệ: số, đúng đơn vị (giây; mili-giây được đổi), trong khoảng 1995 – nay
+    df["Time"], ti = normalize_time(df["Time"])
     m = df["Time"].notna(); log["r2_invalid_time"] = int((~m).sum()); df = df[m]
+    log["r2_time_ms_converted"] = int(ti["unit"] == "ms")     # 1: file ghi Time bằng mili-giây, đã đổi sang giây
     # R3 – nội dung rỗng
     m = df["Text"].fillna("").astype(str).str.strip() != ""
     log["r3_empty_text"] = int((~m).sum()); df = df[m]
@@ -119,8 +170,6 @@ def clean_reviews(raw: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         log["r4_helpfulness_invalid"] = int((~m).sum()); df = df[m]
     # R5 – trùng lặp (UserId, Time, Text): giữ bản ghi Id nhỏ nhất, ghi số bản sao
     keys = [k for k in C.DEDUP_KEYS if k in df.columns]
-    if "Id" not in df.columns:
-        df["Id"] = np.arange(1, len(df) + 1)
     df = df.sort_values("Id")
     # dropna=False: ô UserId trống vẫn được đếm như một giá trị (khớp drop_duplicates), không làm hỏng dup_count
     df["dup_count"] = df.groupby(keys, sort=False, dropna=False)["Id"].transform("size")
