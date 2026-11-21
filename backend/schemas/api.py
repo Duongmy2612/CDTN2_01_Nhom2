@@ -10,12 +10,15 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel as _PydanticBase, ConfigDict, Field
 
-API_CONTRACT_VERSION = "1.4.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
+API_CONTRACT_VERSION = "1.5.0"   # 1.1.0: chỉ bổ sung trường tùy chọn, tương thích ngược với 1.0.0
 # 1.2.0: bổ sung trường tùy chọn time_check, reference (#11), signal, backtest (#10); thêm bảng xuất model_metrics, forecast (#20)
 # 1.3.0 (sprint XD1): prec_macro3, rec_macro3 (#11); complete, problem của giải pháp, n_calls, incomplete_actions (#17)
 # 1.4.0 (sprint XD2 – tích hợp): product_id, product của dự đoán (#14); n_unassigned của chủ đề (#13)
+# 1.5.0 (buổi 8 – kiểm thử & tinh chỉnh): tháng phải từ 01 đến 12 (MONTH_PATTERN); mã lỗi mới NO_ROWS (#1), TEXT_NOT_RECOGNIZED (#14);
+#        cảnh báo kiểm tra dữ liệu mới TIME_MILLISECONDS, INVALID_TIME_ROWS, ID_RENUMBERED, ENCODING_FALLBACK, DELIMITER_DETECTED (#1);
+#        trường tùy chọn low_confidence của dự đoán (#14). Không đổi tên/xóa trường nào – tương thích ngược với 1.4.0
 
-MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"   # buổi 8 (B11): yyyy-mm, tháng 01–12 (trước đây nhận nhầm 2010-13)
+MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"   # yyyy-mm, tháng 01–12 (1.4.0 nhận nhầm 2010-13)
 
 
 class BaseModel(_PydanticBase):
@@ -256,7 +259,9 @@ class PredictResponse(BaseModel):
     suggestion: Optional[str] = Field(None, description="Gợi ý hành động theo chủ đề (FR-16)")
     latency_ms: float
     known_token_ratio: Optional[float] = Field(None, description="Tỷ lệ từ của văn bản có trong từ điển mô hình")
-    note: Optional[str] = Field(None, description="Cảnh báo khi văn bản ít từ mô hình đã biết (ví dụ không phải tiếng Anh)")
+    note: Optional[str] = Field(None, description="Cảnh báo khi văn bản ít từ mô hình đã biết (ví dụ không phải tiếng Anh) "
+                                                  "hoặc khi độ tin cậy thấp")
+    low_confidence: Optional[bool] = Field(None, description="true khi xác suất nhóm cảm xúc cao nhất < 0,5 (từ 1.5.0)")
     model_info: Optional[dict] = Field(None, description="Mô hình đã dùng, F1-macro, số đánh giá huấn luyện, dataset_version")
     product_id: Optional[str] = Field(None, description="Mã sản phẩm đã chuẩn hóa (bỏ khoảng trắng, viết hoa) nếu người dùng có nhập")
     product: Optional[ProductContext] = Field(None, description="Bối cảnh sản phẩm trong dữ liệu hiện tại; null khi không nhập mã "

@@ -24,7 +24,8 @@ REQUIRED_COLUMNS = ["Score", "Time", "Text"]
 OPTIONAL_COLUMNS = ["Id", "ProductId", "UserId", "ProfileName", "Summary",
                     "HelpfulnessNumerator", "HelpfulnessDenominator"]
 DEDUP_KEYS = ["UserId", "Time", "Text"]   # cùng người, cùng thời điểm, cùng nội dung
-MIN_WORDS_PREDICT = 3                     # FR-14: tối thiểu 3 từ khi tự nhập
+MIN_WORDS_PREDICT = 3                     # FR-14: tối thiểu 3 từ khi tự nhập (đếm sau khi bỏ thẻ HTML, URL – buổi 8, B09)
+LOW_CONFIDENCE = 0.50                     # buổi 8: xác suất nhóm cảm xúc cao nhất < 50% → cảnh báo độ tin cậy thấp
 
 # ---- Mô hình dự đoán (FR-10, FR-11) ----
 TEST_SIZE = 0.20                      # 80/20 theo FR-11

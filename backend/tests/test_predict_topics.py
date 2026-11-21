@@ -80,8 +80,9 @@ def test_topics_of_product_add_up(loaded):
 
 
 def test_contract_version_exported():
-    assert client.get("/api/health").json()["version"] == API_CONTRACT_VERSION == "1.4.0"
+    assert client.get("/api/health").json()["version"] == API_CONTRACT_VERSION == "1.5.0"
     spec = json.loads((ROOT / "docs" / "openapi.json").read_text(encoding="utf-8"))
     assert spec["info"]["version"] == API_CONTRACT_VERSION, "chạy lại: python scripts/export_openapi.py"
     props = spec["components"]["schemas"]
     assert "product" in props["PredictResponse"]["properties"] and "n_unassigned" in props["TopicsResponse"]["properties"]
+    assert "low_confidence" in props["PredictResponse"]["properties"]                         # 1.5.0 (buổi 8)

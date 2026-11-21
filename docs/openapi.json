@@ -3,7 +3,7 @@
  "info": {
   "title": "FoodReview Insight API",
   "description": "Hợp đồng API của đề tài Phân tích & dự báo mức độ hài lòng của khách hàng từ dữ liệu đánh giá thực phẩm trên Amazon (Chuyên đề tốt nghiệp 2 – ĐH Văn Lang).",
-  "version": "1.4.0"
+  "version": "1.5.0"
  },
  "paths": {
   "/api/health": {
@@ -306,7 +306,7 @@
        "anyOf": [
         {
          "type": "string",
-         "pattern": "^\\d{4}-\\d{2}$"
+         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
         },
         {
          "type": "null"
@@ -323,7 +323,7 @@
        "anyOf": [
         {
          "type": "string",
-         "pattern": "^\\d{4}-\\d{2}$"
+         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
         },
         {
          "type": "null"
@@ -454,7 +454,7 @@
        "anyOf": [
         {
          "type": "string",
-         "pattern": "^\\d{4}-\\d{2}$"
+         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
         },
         {
          "type": "null"
@@ -471,7 +471,7 @@
        "anyOf": [
         {
          "type": "string",
-         "pattern": "^\\d{4}-\\d{2}$"
+         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
         },
         {
          "type": "null"
@@ -1051,7 +1051,7 @@
        "anyOf": [
         {
          "type": "string",
-         "pattern": "^\\d{4}-\\d{2}$"
+         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
         },
         {
          "type": "null"
@@ -1068,7 +1068,7 @@
        "anyOf": [
         {
          "type": "string",
-         "pattern": "^\\d{4}-\\d{2}$"
+         "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
         },
         {
          "type": "null"
@@ -1888,7 +1888,7 @@
      "version": {
       "type": "string",
       "title": "Version",
-      "default": "1.4.0"
+      "default": "1.5.0"
      },
      "dataset_loaded": {
       "type": "boolean",
@@ -2850,7 +2850,7 @@
     "properties": {
      "month": {
       "type": "string",
-      "pattern": "^\\d{4}-\\d{2}$",
+      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
       "title": "Month"
      },
      "n": {
@@ -3045,7 +3045,19 @@
        }
       ],
       "title": "Note",
-      "description": "Cảnh báo khi văn bản ít từ mô hình đã biết (ví dụ không phải tiếng Anh)"
+      "description": "Cảnh báo khi văn bản ít từ mô hình đã biết (ví dụ không phải tiếng Anh) hoặc khi độ tin cậy thấp"
+     },
+     "low_confidence": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Low Confidence",
+      "description": "true khi xác suất nhóm cảm xúc cao nhất < 0,5 (từ 1.5.0)"
      },
      "model_info": {
       "anyOf": [
