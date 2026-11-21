@@ -10,3 +10,6 @@ Dockerfile.* text eol=lf
 *.joblib binary
 *.pdf binary
 *.docx binary
+# Bản đóng gói 1.5.1 (buổi 9): file chạy Windows giữ CRLF, file chạy macOS giữ LF
+*.bat text eol=crlf
+*.command text eol=lf

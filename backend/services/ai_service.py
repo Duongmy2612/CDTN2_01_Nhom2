@@ -27,6 +27,7 @@ from pydantic import BaseModel, ValidationError
 from backend.core import config as C
 from backend.core.errors import ApiError
 from backend.core.state import FILES, STATE, write_json
+from backend.services import data_service as DS
 from backend.services import forecast_service as FS
 from backend.services import model_service as MS
 from backend.services import topic_service as TS
@@ -328,8 +329,9 @@ def predict_review(text: str) -> dict:
     chỉ số hài lòng và các từ ảnh hưởng của một đánh giá (văn bản tiếng Anh cho kết quả chính xác nhất)."""
     if not STATE.model_ready:
         return {"error": "Mô hình chưa huấn luyện xong"}
-    if len(text.split()) < C.MIN_WORDS_PREDICT:                     # cùng điều kiện với API #14 (FR-14)
-        return {"error": f"Nội dung cần tối thiểu {C.MIN_WORDS_PREDICT} từ để dự đoán"}
+    text, _, err = check_predict_input(text, None)                 # cùng điều kiện với API #14 (FR-14, buổi 8)
+    if err:
+        return {"error": err["message"], "code": err["code"]}
     return predict_full(text, None)
 
 
@@ -376,18 +378,71 @@ TOOL_LABEL = {"get_overview": "KPI tổng quan", "list_risk_products": "Bảng c
 # =========================================================================== #
 # Dự đoán đầy đủ (dùng chung cho API /predict và chatbot)
 # =========================================================================== #
+def _known_words(text: str, summary: str | None) -> tuple[int, int]:
+    """Số từ mô hình đã biết / tổng số từ – tách từ đúng như lúc vector hóa (chữ thường, n't → not)."""
+    vec = STATE.model["vectorizer"]
+    words = vec.build_tokenizer()(vec.build_preprocessor()((summary or "") + " . " + text))
+    return sum(1 for w in words if w in vec.vocabulary_), len(words)
+
+
+def check_predict_input(text: str, summary: str | None) -> tuple[str, str | None, dict | None]:
+    """Kiểm tra đầu vào dự đoán (dùng chung cho API #14 và công cụ predict_review của chatbot).
+
+    Buổi 8: (B09) đếm từ SAU khi làm sạch giống dữ liệu huấn luyện (R6 – bỏ thẻ HTML, URL) nên "<br> <br> <br>" không còn lọt;
+    (B08) văn bản không có từ nào mô hình đã học (ví dụ tiếng Việt) bị từ chối thay vì trả số sao vô nghĩa.
+    Trả (văn bản đã làm sạch, tóm tắt đã làm sạch, lỗi hoặc None).
+    """
+    t = DS.clean_text(pd.Series([text])).iloc[0]
+    sm = DS.clean_text(pd.Series([summary])).iloc[0] if summary else None
+    if len(t.split()) < C.MIN_WORDS_PREDICT:
+        return t, sm, {"code": "TEXT_TOO_SHORT", "message": f"Nội dung cần tối thiểu {C.MIN_WORDS_PREDICT} từ "
+                                                             "(không tính thẻ HTML, đường dẫn)"}
+    known, total = _known_words(t, sm)
+    if known == 0:
+        return t, sm, {"code": "TEXT_NOT_RECOGNIZED",
+                       "message": f"Không nhận ra từ nào trong {total} từ đã nhập: mô hình chỉ học từ đánh giá tiếng Anh nên không "
+                                  "thể dự đoán – hãy nhập nội dung bằng tiếng Anh", "details": {"n_words": total}}
+    return t, sm, None
+
+
+_CALIB: dict = {"version": None, "acc_low": None}
+
+
+def low_confidence_accuracy() -> float | None:
+    """Độ chính xác 3 nhóm cảm xúc trên tập kiểm tra của các dự đoán có xác suất nhóm cao nhất < LOW_CONFIDENCE.
+
+    Tính một lần cho mỗi phiên bản dữ liệu từ predictions.csv – số liệu trong cảnh báo là số đo thật, không phải số viết tay.
+    """
+    if _CALIB["version"] != STATE.version:
+        acc = None
+        p = STATE.predictions
+        if p is not None and {"split", "score", "p_neg", "p3", "p_pos", "pred_sentiment"} <= set(p.columns):
+            t = p[p.split == "test"]
+            conf = t[["p_neg", "p3", "p_pos"]].max(axis=1).values
+            true = np.select([t.score.values <= 2, t.score.values == 3], ["neg", "neu"], "pos")
+            low = conf < C.LOW_CONFIDENCE
+            if low.sum() >= 30:
+                acc = float((t.pred_sentiment.values[low] == true[low]).mean())
+        _CALIB.update(version=STATE.version, acc_low=acc)
+    return _CALIB["acc_low"]
+
+
 def predict_full(text: str, summary: str | None) -> dict:
     out = MS.predict(STATE.model, text, summary)
-    vec = STATE.model["vectorizer"]
-    # tách từ đúng như lúc vector hóa (chữ thường, n't → not); tử số và mẫu số cùng một danh sách từ nên tỷ lệ ≤ 1
-    words = vec.build_tokenizer()(vec.build_preprocessor()((summary or "") + " . " + text))
-    known = sum(1 for w in words if w in vec.vocabulary_)
-    ratio = known / max(len(words), 1)
+    known, total = _known_words(text, summary)
+    ratio = known / max(total, 1)          # tử số và mẫu số cùng một danh sách từ nên tỷ lệ ≤ 1
     out["known_token_ratio"] = round(ratio, 3)
     notes = []
     if ratio < 0.35:
         notes.append("Mô hình học từ đánh giá tiếng Anh; nội dung này có ít từ mô hình đã biết "
                      f"({ratio:.0%}) nên kết quả có thể kém chính xác – hãy nhập đánh giá bằng tiếng Anh.")
+    conf = max(out["sentiment_proba"].values())
+    out["low_confidence"] = bool(conf < C.LOW_CONFIDENCE)
+    if out["low_confidence"]:
+        acc = low_confidence_accuracy()
+        extra = f" Trên tập kiểm tra, các dự đoán có độ chắc chắn dưới 50% chỉ đúng khoảng {acc:.0%}." if acc is not None else ""
+        notes.append(f"Độ tin cậy thấp: nhóm cảm xúc cao nhất chỉ có xác suất {conf:.0%}.{extra} Hãy xem phân bố xác suất "
+                     "trước khi kết luận.")
     star_sent = MS.SENT_CODE[MS.SENT[out["pred_star"]]]
     if star_sent != out["sentiment"]:
         # QĐ-03: số sao = mức có xác suất cao nhất; cảm xúc = nhóm có tổng xác suất cao nhất (cùng cách đánh giá ở mục 5.2)

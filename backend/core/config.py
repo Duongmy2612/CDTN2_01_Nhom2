@@ -15,6 +15,8 @@ CACHE_DIR = BASE_DIR / "cache"
 if os.getenv("FRI_WORK_DIR"):                            # kiểm thử: ghi kết quả vào thư mục tạm, không đụng dữ liệu thật
     _W = Path(os.environ["FRI_WORK_DIR"])
     DATA_PROCESSED, MODELS_DIR, CACHE_DIR = _W / "processed", _W / "models", _W / "cache"
+# buổi 9 (v1.5.1): giao diện đã dựng (npm run build) – có thì backend phục vụ luôn, chạy một cổng không cần Node.js
+FRONTEND_DIST = Path(os.getenv("FRI_FRONTEND_DIST") or BASE_DIR.parent / "frontend" / "dist")
 
 RANDOM_STATE = 42                     # NFR-08: cố định để tái lập kết quả
 
@@ -24,7 +26,8 @@ REQUIRED_COLUMNS = ["Score", "Time", "Text"]
 OPTIONAL_COLUMNS = ["Id", "ProductId", "UserId", "ProfileName", "Summary",
                     "HelpfulnessNumerator", "HelpfulnessDenominator"]
 DEDUP_KEYS = ["UserId", "Time", "Text"]   # cùng người, cùng thời điểm, cùng nội dung
-MIN_WORDS_PREDICT = 3                     # FR-14: tối thiểu 3 từ khi tự nhập
+MIN_WORDS_PREDICT = 3                     # FR-14: tối thiểu 3 từ khi tự nhập (đếm sau khi bỏ thẻ HTML, URL – buổi 8, B09)
+LOW_CONFIDENCE = 0.50                     # buổi 8: xác suất nhóm cảm xúc cao nhất < 50% → cảnh báo độ tin cậy thấp
 
 # ---- Mô hình dự đoán (FR-10, FR-11) ----
 TEST_SIZE = 0.20                      # 80/20 theo FR-11

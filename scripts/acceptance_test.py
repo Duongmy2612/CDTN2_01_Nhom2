@@ -275,7 +275,7 @@ def run_checks(client, raw: pd.DataFrame, clean_path: Path, upload_info: dict | 
 def to_markdown(rows: list[dict], meta: dict) -> str:
     n_ok = sum(r["result"] == "Đạt" for r in rows)
     lines = [f"# Biên bản kiểm thử chấp nhận – yêu cầu chức năng mức Must", "",
-             f"- Ngày chạy: {meta['date']} · dữ liệu: {meta['dataset']} ({vn(meta['n_raw'])} dòng gốc) · phiên bản ứng dụng {meta['app_version']}",
+             f"- Ngày chạy: {meta['date']} · dữ liệu: {meta['dataset']} ({vn(meta['n_raw'])} dòng gốc) · hợp đồng API {meta['app_version']}",
              f"- Môi trường: {meta['machine']}",
              f"- Kết quả: **{n_ok}/{len(rows)} ca đạt** ({sum(r['n_checks'] for r in rows)} điều kiện kiểm tra)", "",
              "| Mã ca | Yêu cầu | Nội dung kiểm tra | Kết quả thực tế | Kết quả |", "|---|---|---|---|---|"]

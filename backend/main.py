@@ -2,6 +2,7 @@
 
 Chạy:  uvicorn backend.main:app --reload --port 8000   (từ thư mục gốc dự án)
 Tài liệu API tự sinh: http://localhost:8000/docs
+Từ bản 1.5.1: nếu đã có frontend/dist (npm run build) thì giao diện cũng ở http://localhost:8000 – xem run_app.py.
 """
 from contextlib import asynccontextmanager
 
@@ -9,29 +10,49 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.core import config as C
 
 load_dotenv(C.BASE_DIR / ".env")   # GEMINI_API_KEY – không đưa .env lên GitHub (NFR-05)
 
 from backend.core.errors import ApiError  # noqa: E402
+from backend.core.frontend import register_frontend  # noqa: E402
 from backend.core.state import STATE  # noqa: E402
 from backend.routers import ai, analytics, forecast, model, predict, report, upload  # noqa: E402
 from backend.schemas.api import API_CONTRACT_VERSION, HealthResponse  # noqa: E402
 from backend.services import ai_service as AI  # noqa: E402
+from backend.services import eda_service as EDA  # noqa: E402
 from backend.services import pipeline as PL  # noqa: E402
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     STATE.load_from_disk()          # QĐ-02: kết quả phiên trước được nạp lại khi khởi động
+    if STATE.dataset_loaded:
+        EDA.keyword_index(STATE)    # buổi 8: nạp chỉ mục từ khóa đã lưu (≈ 0,03 giây) để lọc biểu đồ từ khóa ≤ 2 giây (NFR-02)
     yield
 
 
 app = FastAPI(title="FoodReview Insight API", version=API_CONTRACT_VERSION, lifespan=lifespan,
+              docs_url=None, redoc_url=None,      # /docs tự phục vụ bên dưới (không dùng CDN); bỏ /redoc (cũng tải từ CDN)
               description="Hợp đồng API của đề tài Phân tích & dự báo mức độ hài lòng của khách hàng "
                           "từ dữ liệu đánh giá thực phẩm trên Amazon (Chuyên đề tốt nghiệp 2 – ĐH Văn Lang).")
+
+# buổi 9 (v1.5.1): Swagger UI mặc định tải JS/CSS từ cdn.jsdelivr.net → máy demo không có mạng thì /docs trắng trang.
+# Dùng bản swagger-ui-dist 5.34.1 đóng kèm trong backend/static/swagger-ui (giấy phép Apache 2.0).
+SWAGGER_DIR = C.BASE_DIR / "static" / "swagger-ui"
+app.mount("/static/swagger-ui", StaticFiles(directory=SWAGGER_DIR), name="swagger-ui")
+
+
+@app.get("/docs", include_in_schema=False)
+def swagger_docs():
+    return get_swagger_ui_html(openapi_url=app.openapi_url, title=f"{app.title} – tài liệu API",
+                               swagger_js_url="/static/swagger-ui/swagger-ui-bundle.js",
+                               swagger_css_url="/static/swagger-ui/swagger-ui.css",
+                               swagger_favicon_url="/static/swagger-ui/favicon-32x32.png")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"],
                    allow_headers=["*"], expose_headers=["Content-Disposition"])
 
@@ -41,11 +62,26 @@ async def api_error_handler(_: Request, exc: ApiError):
     return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
 
 
+# buổi 8: thông điệp tiếng Việt cho các lỗi kiểm tra tham số hay gặp (trước đây hiện nguyên văn tiếng Anh của pydantic)
+_MONTH_FIELDS = {"date_from", "date_to", "month"}
+
+
+def _friendly(err: dict) -> str:
+    field = str(err.get("loc", [""])[-1])
+    if err.get("type") == "string_pattern_mismatch" and field in _MONTH_FIELDS:
+        return f"{field} phải có dạng yyyy-mm, tháng từ 01 đến 12 (nhận được “{err.get('input')}”)"
+    if err.get("type") == "string_too_long":
+        return f"{field} dài quá {err.get('ctx', {}).get('max_length')} ký tự"
+    if err.get("type") in ("missing", "string_too_short") and field == "text":
+        return "Chưa nhập nội dung đánh giá"
+    return f"{'.'.join(str(x) for x in err.get('loc', []))} – {err.get('msg', '')}"
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(_: Request, exc: RequestValidationError):
     first = exc.errors()[0] if exc.errors() else {}
     return JSONResponse(status_code=422, content={"error": {"code": "VALIDATION_ERROR",
-                        "message": f"Tham số không hợp lệ: {'.'.join(str(x) for x in first.get('loc', []))} – {first.get('msg', '')}",
+                        "message": f"Tham số không hợp lệ: {_friendly(first)}",
                         "details": {"errors": [{k: str(v) for k, v in e.items() if k in ('loc', 'msg', 'type')} for e in exc.errors()]}}})
 
 
@@ -67,3 +103,6 @@ def health():
 
 for r in (upload.router, analytics.router, model.router, predict.router, forecast.router, ai.router, report.router):
     app.include_router(r, prefix="/api")
+
+# buổi 9 (v1.5.1): có frontend/dist thì phục vụ giao diện ở cùng cổng – đăng ký sau cùng để không che /api, /docs
+FRONTEND_BUNDLED = register_frontend(app, C.FRONTEND_DIST)

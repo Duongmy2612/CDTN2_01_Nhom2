@@ -7,6 +7,8 @@ backend/data/sample/*.csv
 backend/models/*.joblib
 backend/models/*.json
 backend/cache/*.json
+# bộ kết quả demo (toàn bộ Reviews.csv đã xử lý, ~240 MB): chỉ có trong gói zip nộp bài (buổi 9)
+demo_data/
 # Môi trường
 __pycache__/
 .venv/

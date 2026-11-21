@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { ArrowLeft, CheckCircle2, CircleDashed, Database, FileUp, Loader2, Sparkles, XCircle } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle2, CircleDashed, Database, FileUp, Loader2, Sparkles, XCircle } from 'lucide-react'
 import { api, errorMessage } from '../api/client.js'
 import { nf } from '../lib/format.js'
 import { BrandMark } from '../components/Brand.jsx'
@@ -22,6 +22,7 @@ export default function UploadPage({ health, refreshHealth, onDone, onBack }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const [elapsed, setElapsed] = useState(0)
+  const [warns, setWarns] = useState([])        // buổi 8: cảnh báo kiểm tra file (Time mili-giây, dấu ;, bảng mã…) – trước đây bị bỏ qua
   const input = useRef(null)
   const timer = useRef(null)
 
@@ -48,10 +49,11 @@ export default function UploadPage({ health, refreshHealth, onDone, onBack }) {
   }, [])
 
   const start = async (promise) => {
-    setErr(null); setBusy(true); setJob(null)
+    setErr(null); setBusy(true); setJob(null); setWarns([])
     try {
       const acc = await promise
       setUploadPct(null)
+      setWarns(acc.validation?.warnings || [])
       setJob({ status: 'queued', progress: 0, steps: [], file_name: acc.file_name, n_rows_raw: acc.n_rows_raw })
       poll(acc.job_id)
     } catch (e) { setErr(errorMessage(e)); setBusy(false); setUploadPct(null) }
@@ -127,12 +129,13 @@ export default function UploadPage({ health, refreshHealth, onDone, onBack }) {
                   Xử lý thất bại: {job.error?.message}. Hãy kiểm tra file rồi thử lại.
                 </div>
               )}
+              {job?.status === 'failed' && <Warnings warns={warns} />}
               {health?.dataset_loaded && <p className="text-[12.5px] text-muted mt-4">Đang có dữ liệu “{health.dataset?.file_name}”. Tải file mới sẽ thay thế toàn bộ kết quả hiện tại.</p>}
             </>
           )}
 
           {(running || job?.status === 'done') && (
-            <Progress job={job} uploadPct={uploadPct} elapsed={elapsed} onDone={onDone} />
+            <Progress job={job} uploadPct={uploadPct} elapsed={elapsed} onDone={onDone} warns={warns} />
           )}
         </section>
       </main>
@@ -140,7 +143,21 @@ export default function UploadPage({ health, refreshHealth, onDone, onBack }) {
   )
 }
 
-function Progress({ job, uploadPct, elapsed, onDone }) {
+// Cảnh báo của bước kiểm tra file: hệ thống đã tự xử lý nhưng người dùng cần biết (mỗi cảnh báo có message tiếng Việt)
+function Warnings({ warns }) {
+  if (!warns?.length) return null
+  return (
+    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12.5px] text-amber-900">
+      <div className="flex items-center gap-1.5 font-medium"><AlertTriangle size={14} />Lưu ý về file ({warns.length})</div>
+      <ul className="mt-1 space-y-0.5 list-disc pl-5">
+        {/* message của backend đã có số dòng; chỉ ghép thêm tên cột (MISSING_OPTIONAL) */}
+        {warns.map((w) => <li key={w.code}>{w.message}{w.columns?.length ? `: ${w.columns.join(', ')}` : ''}</li>)}
+      </ul>
+    </div>
+  )
+}
+
+function Progress({ job, uploadPct, elapsed, onDone, warns }) {
   const steps = job?.steps?.length ? job.steps : Object.keys(STEP_HINT).map((n) => ({ name: n, status: 'pending' }))
   const s = job?.summary
   return (
@@ -150,6 +167,7 @@ function Progress({ job, uploadPct, elapsed, onDone }) {
         <span className="text-[12.5px] text-muted tabular-nums">{elapsed ? `${elapsed} giây` : ''}</span>
       </div>
       <div className="text-[13px] text-muted mt-0.5">{job?.file_name}{job?.n_rows_raw ? ` · ${nf(job.n_rows_raw)} dòng` : ''}</div>
+      <Warnings warns={warns} />
       <div className="mt-4 h-2 rounded-full bg-slate-100 overflow-hidden">
         <div className="h-full bg-primary transition-[width] duration-700" style={{ width: `${uploadPct != null ? uploadPct : job?.progress || 0}%` }} />
       </div>

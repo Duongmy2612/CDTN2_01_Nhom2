@@ -11,8 +11,12 @@ const EXAMPLES = [
   ['Trung tính', 'It is okay', 'The flavor is okay but a bit bland for my taste. Not bad, not great. Might try a different flavor next time.'],
   ['Thú cưng bị bệnh', 'Made my dog sick', 'My dog got sick after eating these treats. I checked the bag and they are made in China. Never again.'],
   ['Giá cao', 'Too expensive', 'Way too expensive compared to my local grocery store, and the shipping cost more than the product itself.'],
-  ['Đánh giá tiếng Việt', '', 'Cà phê bị cũ, vị đắng khét và hộp giao tới bị móp méo, rất thất vọng.'],
+  ['Vừa khen vừa chê', '', 'Love the flavor but the bag was half empty and it costs too much.'],
+  // buổi 8 (B08): ngoài phạm vi mô hình – hệ thống báo TEXT_NOT_RECOGNIZED thay vì trả 1 sao kèm “Tích cực 49%” như trước
+  ['Tiếng Việt (ngoài phạm vi)', '', 'Cà phê bị cũ, vị đắng khét và hộp giao tới bị móp méo, rất thất vọng.'],
 ]
+// đếm từ giống máy chủ (R6): bỏ thẻ HTML và đường dẫn trước khi đếm – "<br> <br> <br>" không còn được tính là 3 từ (B09)
+const countWords = (t) => { const c = t.replace(/<[^>]*>/g, ' ').replace(/(https?:\/\/|www\.)\S+/g, ' ').trim(); return c ? c.split(/\s+/).length : 0 }
 const HKEY = 'fri_predict_history'
 
 export default function PredictTab() {
@@ -35,7 +39,7 @@ export default function PredictTab() {
       setHist(h); store.set(HKEY, h)
     } catch (e) { setErr(errorMessage(e)); setRes(null) } finally { setBusy(false) }
   }
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0
+  const words = countWords(text)
 
   return (
     <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-5 items-start">
@@ -52,7 +56,7 @@ export default function PredictTab() {
             value={text} maxLength={5000} onChange={(e) => setText(e.target.value)} placeholder="VD: The coffee arrived stale and the box was crushed…"
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && words >= 3) run() }} />
           <div className="flex items-center gap-3 mt-2">
-            <span className={`text-[12px] ${words && words < 3 ? 'text-neg' : 'text-muted'}`}>{words} từ{words && words < 3 ? ' – cần tối thiểu 3 từ' : ''}</span>
+            <span className={`text-[12px] ${text.trim() && words < 3 ? 'text-neg' : 'text-muted'}`}>{words} từ{text.trim() && words < 3 ? ' – cần tối thiểu 3 từ (không tính thẻ HTML, đường dẫn)' : ''}</span>
             <span className="flex-1" />
             <button className="btn" onClick={() => { setText(''); setSummary(''); setPid(''); setRes(null) }}>Đặt lại</button>
             <button className="btn btn-primary" disabled={busy || words < 3} onClick={() => run()}>{busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />}Dự đoán</button>
@@ -109,7 +113,8 @@ function Result({ r, app }) {
           </div>
           <div>
             <div className="text-[12px] text-muted">Cảm xúc</div>
-            <div className="mt-2"><SentBadge s={r.sentiment}>{s.label} · {pct(r.sentiment_proba[r.sentiment], 0)}</SentBadge></div>
+            <div className="mt-2 flex items-center gap-1.5"><SentBadge s={r.sentiment}>{s.label} · {pct(r.sentiment_proba[r.sentiment], 0)}</SentBadge>
+              {r.low_confidence && <span className="text-[11.5px] rounded-full px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200" title="Xác suất nhóm cảm xúc cao nhất dưới 50%">Độ tin cậy thấp</span>}</div>
           </div>
           <div className="flex-1 min-w-[180px]">
             <div className="flex justify-between text-[12px] text-muted"><span>Chỉ số hài lòng</span><span className="tabular-nums text-ink font-semibold text-[14px]">{nf(r.satisfaction_index, 1)}/100</span></div>
