@@ -1,4 +1,4 @@
-# Biên bản kiểm tra tích hợp – số liệu nhất quán giữa các màn hình (21/11/2026 18:25)
+# Biên bản kiểm tra tích hợp – số liệu nhất quán giữa các màn hình (21/11/2026 18:32)
 
 - Địa chỉ gọi: `http://localhost:8000`; hợp đồng API 1.5.0
 - Dữ liệu: Reviews.csv – 393.890 đánh giá sạch, 67.612 sản phẩm, tháng trọn vẹn cuối 2012-09

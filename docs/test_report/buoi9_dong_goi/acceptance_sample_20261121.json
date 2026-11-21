@@ -1,19 +1,19 @@
 {
  "meta": {
-  "date": "2026-11-21 18:28",
+  "date": "2026-11-21 18:51",
   "dataset": "reviews_sample_100k.csv",
   "n_raw": 100000,
   "app_version": "1.5.0",
   "machine": "Linux x86_64, 2 CPU, Python 3.11.15",
-  "job_seconds": 164.7,
+  "job_seconds": 171.0,
   "steps": {
    "validate": 0.2,
-   "clean": 5.2,
-   "eda": 10.6,
-   "train_model": 138.6,
-   "topics": 2.1,
+   "clean": 5.0,
+   "eda": 10.1,
+   "train_model": 146.0,
+   "topics": 2.2,
    "forecast": 0.1,
-   "alerts": 6.9
+   "alerts": 6.4
   }
  },
  "cases": [
@@ -21,7 +21,7 @@
    "tc": "TC-01",
    "fr": "FR-01",
    "content": "Tải file CSV lên, job nền chạy đủ 7 bước có tiến trình",
-   "actual": "POST /api/upload → 202, job job_20261121_874a; 7/7 bước xong trong 165 giây; tiến trình tăng dần 0% → 100%",
+   "actual": "POST /api/upload → 202, job job_20261121_d486; 7/7 bước xong trong 171 giây; tiến trình tăng dần 0% → 100%",
    "result": "Đạt",
    "failed": [],
    "n_checks": 3
@@ -93,7 +93,7 @@
    "tc": "TC-09",
    "fr": "FR-10",
    "content": "Mô hình huấn luyện tự động trên dữ liệu đã làm sạch, dùng được để dự đoán",
-   "actual": "mô hình LR huấn luyện lúc 2026-11-21T18:27:06 trên 87.622 đánh giá đã làm sạch; dự đoán được ngay sau khi xử lý: 5 sao, pos",
+   "actual": "mô hình LR huấn luyện lúc 2026-11-21T18:49:41 trên 87.622 đánh giá đã làm sạch; dự đoán được ngay sau khi xử lý: 5 sao, pos",
    "result": "Đạt",
    "failed": [],
    "n_checks": 2

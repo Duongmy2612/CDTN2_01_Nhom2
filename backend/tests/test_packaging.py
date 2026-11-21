@@ -70,3 +70,26 @@ def test_launcher_files_line_endings():
     for name in ("chay_ung_dung.sh", "chay_ung_dung.command", "khoi_phuc_demo.command"):
         assert b"\r\n" not in (ROOT / name).read_bytes(), name
     assert "def main" in (ROOT / "run_app.py").read_text(encoding="utf-8")
+
+
+def test_launcher_picks_next_free_port():
+    """Cổng đang có chương trình khác nghe thì run_app.py chuyển sang cổng kế tiếp; cổng vừa đóng vẫn dùng lại được."""
+    import socket
+
+    import run_app
+    with socket.socket() as busy:
+        busy.bind(("127.0.0.1", 0))
+        busy.listen()
+        port = busy.getsockname()[1]
+        assert run_app.free_port("127.0.0.1", port) != port
+    # vừa đóng (giống lúc tắt rồi mở lại ứng dụng): phải dùng lại đúng cổng đó, không nhảy sang cổng khác
+    with socket.socket() as srv:
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        srv.bind(("127.0.0.1", 0))
+        srv.listen()
+        port2 = srv.getsockname()[1]
+        cli = socket.create_connection(("127.0.0.1", port2))
+        conn, _ = srv.accept()
+        conn.close()                      # máy chủ đóng trước → kết nối nằm ở TIME_WAIT phía máy chủ
+        cli.close()
+    assert run_app.free_port("127.0.0.1", port2) == port2

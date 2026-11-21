@@ -1,12 +1,12 @@
 # Biên bản kiểm thử chấp nhận – yêu cầu chức năng mức Must
 
-- Ngày chạy: 2026-11-21 18:28 · dữ liệu: reviews_sample_100k.csv (100.000 dòng gốc) · phiên bản ứng dụng 1.5.0
+- Ngày chạy: 2026-11-21 18:51 · dữ liệu: reviews_sample_100k.csv (100.000 dòng gốc) · phiên bản ứng dụng 1.5.0
 - Môi trường: Linux x86_64, 2 CPU, Python 3.11.15
 - Kết quả: **14/14 ca đạt** (52 điều kiện kiểm tra)
 
 | Mã ca | Yêu cầu | Nội dung kiểm tra | Kết quả thực tế | Kết quả |
 |---|---|---|---|---|
-| TC-01 | FR-01 | Tải file CSV lên, job nền chạy đủ 7 bước có tiến trình | POST /api/upload → 202, job job_20261121_874a; 7/7 bước xong trong 165 giây; tiến trình tăng dần 0% → 100% | Đạt |
+| TC-01 | FR-01 | Tải file CSV lên, job nền chạy đủ 7 bước có tiến trình | POST /api/upload → 202, job job_20261121_d486; 7/7 bước xong trong 171 giây; tiến trình tăng dần 0% → 100% | Đạt |
 | TC-02 | FR-02 | File thiếu cột bắt buộc / Score sai / không phải .csv bị từ chối, nêu rõ lỗi, dữ liệu đang dùng giữ nguyên | thiếu cột Text → 400 MISSING_COLUMN “Thiếu cột bắt buộc: Text”; Score ngoài 1–5 ở mọi dòng → 400 INVALID_SCORE; file .xlsx → 415 UNSUPPORTED_TYPE; dữ liệu đang dùng giữ nguyên (cùng dataset_version) | Đạt |
 | TC-03 | FR-03 | Báo cáo chất lượng: số dòng, số dòng trùng, giá trị thiếu, khoảng thời gian, 20 dòng đầu | số dòng 100.000 = pandas 100.000; số dòng trùng 12.377 = pandas 12.377; giá trị thiếu từng cột khớp pandas; khoảng thời gian 1999-12-06 – 2012-10-26; xem trước 20 dòng, không có ProfileName | Đạt |
 | TC-04 | FR-04 | Làm sạch R1 – R9: không còn trùng, rỗng, Helpfulness sai, thẻ HTML; bỏ ProfileName, UserId | 100.000 → 87.622 đánh giá; pandas độc lập 87.622; bỏ trùng 12.377 = pandas 12.377; Helpfulness sai 1 = 1; review_id duy nhất, không còn nội dung rỗng, < 3 từ; không còn thẻ HTML trong nội dung; helpful_num ≤ helpful_den ở mọi dòng; không có cột ProfileName, UserId (thay bằng user_key); chữ thường ở bước vector hóa: “Didn't LIKE” → “did not like” | Đạt |
@@ -14,7 +14,7 @@
 | TC-06 | FR-06 | Lưu reviews_clean.csv; có dữ liệu mẫu dùng ngay | reviews_clean.csv đọc được: 87.622 dòng × 14 cột; dữ liệu mẫu 100.000 dòng có sẵn trên máy chủ (nút “Dùng dữ liệu mẫu”) | Đạt |
 | TC-07 | FR-07 | KPI tổng quan khớp phép tính độc lập bằng pandas | đánh giá 87.622, sản phẩm 31.111, người dùng 71.536 khớp pandas; điểm TB 4,1867 = 4,1867; tỷ lệ tiêu cực 14,37% = 14,37%; F1-macro mô hình 0,692 = mô hình đang chọn; SP rủi ro cao 1 = bảng sản phẩm | Đạt |
 | TC-08 | FR-08 | 5 biểu đồ EDA có dữ liệu, số liệu khớp pandas | 5/5 biểu đồ trả 200 và có dữ liệu; phân bố số sao khớp value_counts(); 10 sản phẩm nhiều đánh giá nhất khớp pandas (đầu bảng B007JFMH8M); tổng số đánh giá theo tháng = 87.622 | Đạt |
-| TC-09 | FR-10 | Mô hình huấn luyện tự động trên dữ liệu đã làm sạch, dùng được để dự đoán | mô hình LR huấn luyện lúc 2026-11-21T18:27:06 trên 87.622 đánh giá đã làm sạch; dự đoán được ngay sau khi xử lý: 5 sao, pos | Đạt |
+| TC-09 | FR-10 | Mô hình huấn luyện tự động trên dữ liệu đã làm sạch, dùng được để dự đoán | mô hình LR huấn luyện lúc 2026-11-21T18:49:41 trên 87.622 đánh giá đã làm sạch; dự đoán được ngay sau khi xử lý: 5 sao, pos | Đạt |
 | TC-10 | FR-11 | So sánh ≥ 3 mô hình trên cùng tập 80/20: Accuracy, Precision, Recall, F1-macro, MAE, ma trận nhầm lẫn | 3 mô hình + baseline: B0, LR, NB, SVM; cùng tập 70.097 / 17.525 (80/20); đủ Accuracy, Precision, Recall, F1-macro, MAE cho mọi mô hình; ma trận nhầm lẫn 3×3 và 5×5, tổng 17.525 = tập kiểm tra; mô hình chọn LR: F1-macro 0,692 ≥ 0,65; F1 Tiêu cực 0,765; MAE 0,389 | Đạt |
 | TC-11 | FR-14 | Tự nhập đánh giá → số sao, cảm xúc, xác suất, chỉ số hài lòng ≤ 1 giây; < 3 từ bị từ chối | “The coffee arrived stale and the…” → 1 sao, neg, chỉ số 15,0; “It is okay, nothing special but …” → 3 sao, neu, chỉ số 50,0; “Great taste, fresh and crunchy, …” → 5 sao, pos, chỉ số 99,4; thời gian dự đoán lớn nhất 9 ms ≤ 1 giây; “too short” (2 từ) → 422 TEXT_TOO_SHORT | Đạt |
 | TC-12 | FR-18 | ≥ 5 chủ đề phàn nàn, mỗi chủ đề có tên, 10 từ khóa, tỷ trọng, 3 đánh giá mẫu, xu hướng | 9 chủ đề (≥ 5); mỗi chủ đề có tên, 10 từ khóa, tỷ trọng, 3 đánh giá mẫu, xu hướng theo tháng; tổng tỷ trọng 100,0% của đánh giá tiêu cực | Đạt |

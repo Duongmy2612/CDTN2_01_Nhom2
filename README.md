@@ -81,7 +81,7 @@ Thứ tự bắt buộc: 01 (tạo `reviews_clean.csv`) → 02, 03, 04, 05; 06 (
 ```bash
 pytest backend/tests -q
 ```
-126 ca kiểm thử (11 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
+127 ca kiểm thử (11 tệp) chạy trên dữ liệu tổng hợp (`backend/tests/synth.py`) trong thư mục tạm, không ghi đè dữ liệu thật
 (`pytest.ini` ở thư mục gốc đã khai báo `pythonpath = .` nên chạy thẳng lệnh trên, không cần cài gói):
 đủ 20 API, định dạng lỗi, quy tắc làm sạch R1–R9 trên file có lỗi (UserId trống, Score sai, Text rỗng, bản ghi trùng),
 pipeline 7 bước, mọi API trả dữ liệu đúng lược đồ, kiểm tra theo thời gian (giai đoạn học trước giai đoạn kiểm tra),
@@ -100,8 +100,9 @@ Từ bản 1.5.0 thêm 41 ca kiểm thử hồi quy cho các lỗi tìm được
 `test_upload_robustness.py` (dấu phân cách `;` tab `|`, bảng mã cp1252, BOM, tháng 13, tải file khi đang có job), `test_predict_robustness.py` (văn bản
 không có từ nào mô hình biết, đếm từ sau khi bỏ HTML, cờ độ tin cậy thấp), `test_frontend_robustness.py` (giao diện hiển thị
 cảnh báo kiểm tra file, bộ đếm từ khớp máy chủ).
-Bản 1.5.1 thêm `test_packaging.py` (5 ca): backend phục vụ giao diện đã dựng ở cùng cổng mà không che `/api`, `/docs`, API không
-có vẫn trả 404 dạng JSON, không đọc được tệp ngoài `frontend/dist`, file chạy `.bat` xuống dòng CRLF và chỉ dùng ký tự ASCII.
+Bản 1.5.1 thêm `test_packaging.py` (6 ca): backend phục vụ giao diện đã dựng ở cùng cổng mà không che `/api`, `/docs`, API không
+có vẫn trả 404 dạng JSON, không đọc được tệp ngoài `frontend/dist`, file chạy `.bat` xuống dòng CRLF và chỉ dùng ký tự ASCII,
+`run_app.py` bỏ qua cổng đang bận nhưng dùng lại được cổng vừa tắt.
 Kiểm thử không bao giờ dùng khóa thật trong `backend/.env` (conftest đặt khóa rỗng trước khi nạp ứng dụng).
 CI trên GitHub (`.github/workflows/ci.yml`) chạy lại `pytest` và `npm run build` mỗi lần mở pull request vào `main`.
 
@@ -147,6 +148,25 @@ xanh; không đưa `backend/.env`, dữ liệu gốc, mô hình đã huấn luy�
 (`python scripts/export_openapi.py`).
 Sơ đồ trong tài liệu thiết kế: `python docs/diagrams/erd_build.py` (ERD) và
 `mmdc -i docs/diagrams/seq_upload.mmd -o docs/seq_upload.png -c docs/diagrams/mmd_config.json -s 2` (tương tự cho seq_predict).
+
+## 9. Thay đổi phiên bản 1.5.1 (buổi 9 – triển khai, đóng gói chạy độc lập)
+Hợp đồng API giữ nguyên 1.5.0 (không đổi API nào); bản 1.5.1 chỉ thay cách cài đặt và chạy để demo không phụ thuộc máy lập trình.
+- **Một cổng, không cần Node.js khi chạy:** có `frontend/dist` thì backend phục vụ luôn giao diện (`backend/core/frontend.py`) –
+  `/api`, `/docs` giữ nguyên, API không có vẫn trả 404 JSON, không đọc được tệp ngoài `dist`. Chế độ phát triển cũ (Vite 5173) và
+  Docker Compose không đổi.
+- **Một lần nhấp đúp:** `run_app.py` + `chay_ung_dung.bat|.command|.sh` kiểm tra Python 3.10–3.12, tạo `.venv`, cài thư viện (ghi dấu
+  theo mã băm requirements), dựng giao diện nếu thiếu, chép bộ kết quả demo ở lần đầu, chọn cổng trống, chờ `/api/health` rồi mở
+  trình duyệt; `khoi_phuc_demo.*` đưa ứng dụng về bộ dữ liệu demo. Hướng dẫn cho người không lập trình: `HUONG_DAN_CAI_DAT.md`.
+- **Gói nộp kèm** `FoodReview_Insight_v1.5.1.zip` (134 MB): mã nguồn, `frontend/dist`, bộ mẫu 100.000 dòng, `demo_data/`
+  (toàn bộ Reviews.csv đã xử lý – phiên bản dữ liệu `3f6b35ee`, mô hình, 48 kết quả Gemini ngày 07/11); không có `backend/.env`.
+- **Kiểm thử trên môi trường sạch** (21/11, Linux 2 CPU, Python 3.11, giải nén mới, `.venv` mới, không dùng bộ đệm pip): cài đặt
+  54 – 104 giây ở 2 lần đo (phụ thuộc mạng, tải khoảng 140 MB thư viện), sẵn sàng sau 10 giây mỗi lần mở, ứng dụng dùng khoảng
+  0,74 GB RAM. Gọi qua đúng cổng 8000: chạy thử 27/27 API, kiểm tra tích hợp 17/17 chỉ số, kiểm thử chấp nhận 14/14 FR Must
+  (job bộ mẫu 171,0 giây) – biên bản trong `docs/test_report/buoi9_dong_goi/`.
+- **Lỗi tìm được khi thử gói:** tắt rồi mở lại ngay thì ứng dụng nhảy sang cổng 8001, 8002 vì bước chọn cổng coi cổng có kết nối cũ
+  ở trạng thái TIME_WAIT là “bận” → bật `SO_REUSEADDR` giống uvicorn; có ca hồi quy trong `test_packaging.py`.
+- **Chưa kiểm chứng trên máy thật:** file `.bat` (Windows) và `.command` (macOS) – máy kiểm thử là Linux; nhóm chạy thử và đo
+  NFR-08 trên máy thành viên trước buổi 10.
 
 ## 10. Thay đổi phiên bản 1.5.0 (buổi 8 – kiểm thử và tinh chỉnh)
 Nhóm kiểm thử ngoài luồng chính: 22 ca TC8, 22 file dữ liệu “xấu” (D01–D22), 40 lời gọi API với tham số biên/sai, 23 câu kiểm thử

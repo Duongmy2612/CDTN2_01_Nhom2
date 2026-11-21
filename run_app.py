@@ -134,6 +134,8 @@ def free_port(host: str, start: int) -> int:
             if c.connect_ex(("127.0.0.1", port)) == 0:      # đã có chương trình khác nghe ở cổng này
                 continue
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # giống uvicorn: bật SO_REUSEADDR, nếu không thì cổng vừa dùng (kết nối cũ ở TIME_WAIT) bị coi là bận
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.bind((host, port))
                 return port
