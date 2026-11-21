@@ -1,0 +1,314 @@
+{
+ "tag": "v1.5.0 (sau tinh chỉnh)",
+ "base": "http://localhost:8000",
+ "mft": [
+  {
+   "case": "Cơ bản – khen rõ",
+   "text": "This coffee is delicious, fresh and I will buy it again.",
+   "want": "pos",
+   "label": "pos",
+   "star": 5,
+   "proba": {
+    "neg": 0.0026,
+    "neu": 0.0006,
+    "pos": 0.9968
+   },
+   "conf": 0.9968,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Cơ bản – chê rõ",
+   "text": "Terrible taste, stale and the box arrived crushed. Never again.",
+   "want": "neg",
+   "label": "neg",
+   "star": 1,
+   "proba": {
+    "neg": 0.9987,
+    "neu": 0.0009,
+    "pos": 0.0003
+   },
+   "conf": 0.9987,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Cơ bản – trung tính",
+   "text": "It is okay, nothing special, average taste for the price.",
+   "want": "neu",
+   "label": "neu",
+   "star": 3,
+   "proba": {
+    "neg": 0.0115,
+    "neu": 0.9868,
+    "pos": 0.0017
+   },
+   "conf": 0.9868,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Phủ định – not bad",
+   "text": "Not bad at all, actually pretty tasty and my kids liked it.",
+   "want": "pos",
+   "label": "pos",
+   "star": 4,
+   "proba": {
+    "neg": 0.0006,
+    "neu": 0.0034,
+    "pos": 0.996
+   },
+   "conf": 0.996,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Phủ định – not good",
+   "text": "This tea is not good, not fresh and not worth the money.",
+   "want": "neg",
+   "label": "neg",
+   "star": 1,
+   "proba": {
+    "neg": 0.9923,
+    "neu": 0.0069,
+    "pos": 0.0007
+   },
+   "conf": 0.9923,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Phủ định – no complaints",
+   "text": "No complaints, arrived quickly and tastes great.",
+   "want": "pos",
+   "label": "pos",
+   "star": 5,
+   "proba": {
+    "neg": 0.0005,
+    "neu": 0.0011,
+    "pos": 0.9984
+   },
+   "conf": 0.9984,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Đảo ý – khen rồi chê",
+   "text": "Great flavor but the bag arrived torn and half of the chips were stale.",
+   "want": "neg",
+   "label": "neg",
+   "star": 3,
+   "proba": {
+    "neg": 0.5065,
+    "neu": 0.3834,
+    "pos": 0.1101
+   },
+   "conf": 0.5065,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Đảo ý – chê rồi khen",
+   "text": "Shipping was slow, but the cookies are the best I have ever had.",
+   "want": "pos",
+   "label": "pos",
+   "star": 5,
+   "proba": {
+    "neg": 0.0525,
+    "neu": 0.0646,
+    "pos": 0.8829
+   },
+   "conf": 0.8829,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Mỉa mai",
+   "text": "Oh great, another box of stale crackers. Just what I wanted.",
+   "want": "neg",
+   "label": "pos",
+   "star": 5,
+   "proba": {
+    "neg": 0.3918,
+    "neu": 0.0298,
+    "pos": 0.5784
+   },
+   "conf": 0.5784,
+   "known": 1.0,
+   "low": false,
+   "ok": false
+  },
+  {
+   "case": "Giao hàng (không phải sản phẩm)",
+   "text": "The product itself is fine but Amazon shipping took three weeks.",
+   "want": "neu",
+   "label": "neu",
+   "star": 3,
+   "proba": {
+    "neg": 0.1239,
+    "neu": 0.7571,
+    "pos": 0.1189
+   },
+   "conf": 0.7571,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Thú cưng bị bệnh",
+   "text": "My dog got sick after eating these treats, please be careful.",
+   "want": "neg",
+   "label": "neg",
+   "star": 1,
+   "proba": {
+    "neg": 0.9861,
+    "neu": 0.0099,
+    "pos": 0.004
+   },
+   "conf": 0.9861,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Giá cao",
+   "text": "Tastes fine but way overpriced compared to my local grocery store.",
+   "want": "neu",
+   "label": "neu",
+   "star": 3,
+   "proba": {
+    "neg": 0.3012,
+    "neu": 0.6779,
+    "pos": 0.0209
+   },
+   "conf": 0.6779,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Viết hoa, dấu câu",
+   "text": "AWESOME!!! BEST CHOCOLATE EVER!!!",
+   "want": "pos",
+   "label": "pos",
+   "star": 5,
+   "proba": {
+    "neg": 0.0002,
+    "neu": 0.0001,
+    "pos": 0.9998
+   },
+   "conf": 0.9998,
+   "known": 1.0,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Lỗi chính tả",
+   "text": "teh cofee was horible and tastd burnt",
+   "want": "neg",
+   "label": "neg",
+   "star": 1,
+   "proba": {
+    "neg": 0.6687,
+    "neu": 0.0842,
+    "pos": 0.247
+   },
+   "conf": 0.6687,
+   "known": 0.714,
+   "low": false,
+   "ok": true
+  },
+  {
+   "case": "Ngoài phạm vi – tiếng Việt",
+   "text": "Cà phê rất dở, hộp bị móp và giao hàng trễ",
+   "want": "TEXT_NOT_RECOGNIZED",
+   "label": "TEXT_NOT_RECOGNIZED",
+   "status": 422,
+   "ok": true
+  }
+ ],
+ "inv": [
+  {
+   "case": "Đổi tên món",
+   "a": "This coffee is delicious and fresh, I will order it again.",
+   "b": "This granola is delicious and fresh, I will order it again.",
+   "label_a": "pos",
+   "label_b": "pos",
+   "delta": 0.0004,
+   "ok": true
+  },
+  {
+   "case": "Đổi con số",
+   "a": "Bought 2 bags, both were stale and tasted awful.",
+   "b": "Bought 6 bags, both were stale and tasted awful.",
+   "label_a": "neg",
+   "label_b": "neg",
+   "delta": 0.0,
+   "ok": true
+  },
+  {
+   "case": "Thêm thẻ HTML",
+   "a": "Great snack for the kids. Will buy again.",
+   "b": "Great snack for the kids.<br /><br />Will buy again.",
+   "label_a": "pos",
+   "label_b": "pos",
+   "delta": 0.0,
+   "ok": true
+  },
+  {
+   "case": "Thêm đường dẫn",
+   "a": "The tea tastes like dust, very disappointed.",
+   "b": "The tea tastes like dust, very disappointed. http://www.amazon.com/dp/B000ABC",
+   "label_a": "neg",
+   "label_b": "neg",
+   "delta": 0.0,
+   "ok": true
+  },
+  {
+   "case": "Khoảng trắng, xuống dòng",
+   "a": "Too sweet and the texture is weird.",
+   "b": "Too   sweet\n\nand the texture   is weird.",
+   "label_a": "neg",
+   "label_b": "neg",
+   "delta": 0.0,
+   "ok": true
+  }
+ ],
+ "dir": [
+  {
+   "case": "Thêm câu chê → P(tiêu cực) tăng",
+   "a": "The cookies taste nice and arrived on time.",
+   "b": "The cookies taste nice and arrived on time. But two packs were moldy.",
+   "side": "neg",
+   "p_before": 0.0257,
+   "p_after": 0.1681,
+   "ok": true
+  },
+  {
+   "case": "Thêm câu khen → P(tích cực) tăng",
+   "a": "The sauce is a little salty.",
+   "b": "The sauce is a little salty. Still, my whole family loves it and we reorder every month.",
+   "side": "pos",
+   "p_before": 0.2971,
+   "p_after": 0.9329,
+   "ok": true
+  },
+  {
+   "case": "Thêm 'never again' → P(tiêu cực) tăng",
+   "a": "The chips were okay I suppose.",
+   "b": "The chips were okay I suppose. Never again.",
+   "side": "neg",
+   "p_before": 0.0399,
+   "p_after": 0.4972,
+   "ok": true
+  }
+ ]
+}

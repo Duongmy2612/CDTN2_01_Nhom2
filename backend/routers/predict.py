@@ -4,6 +4,9 @@ Sprint XD2 (PB-06, tích hợp): mã sản phẩm nhập kèm được chuẩn h
 Có mã → trả bối cảnh sản phẩm (số đánh giá, điểm TB, chỉ số hài lòng, mức rủi ro) để so với kết quả dự đoán;
 không có mã trong dữ liệu → vẫn dự đoán theo nội dung nhưng product = null kèm ghi chú, giao diện không mở chi tiết
 sản phẩm (trước đây nút “Xem sản phẩm” mở ngăn chi tiết toàn lỗi 404).
+
+Buổi 8 (kiểm thử & tinh chỉnh): văn bản được làm sạch giống dữ liệu huấn luyện trước khi đếm từ và dự đoán; văn bản không có từ
+nào mô hình đã học → 422 TEXT_NOT_RECOGNIZED; xác suất nhóm cảm xúc cao nhất < 50% → low_confidence = true kèm ghi chú.
 """
 import time
 
@@ -25,10 +28,11 @@ router = APIRouter(tags=["Dự đoán"])
              responses={409: {"model": ErrorResponse}, 422: {"model": ErrorResponse}})
 def predict(req: PredictRequest):
     require_model()
-    if len(req.text.split()) < C.MIN_WORDS_PREDICT:
-        raise ApiError(422, "TEXT_TOO_SHORT", f"Nội dung cần tối thiểu {C.MIN_WORDS_PREDICT} từ")
     t0 = time.perf_counter()
-    out = AI.predict_full(req.text, req.summary)
+    text, summary, err = AI.check_predict_input(req.text, req.summary)   # buổi 8: B08 (không nhận ra từ nào), B09 (đếm từ sau làm sạch)
+    if err:
+        raise ApiError(422, err["code"], err["message"], err.get("details"))
+    out = AI.predict_full(text, summary)
     pid = (req.product_id or "").strip().upper() or None
     out["product_id"], out["product"] = pid, None
     if pid:

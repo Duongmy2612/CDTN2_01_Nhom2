@@ -177,8 +177,10 @@ def test_predict(loaded):
     assert any(t["weight"] < 0 for t in p["tokens"]) and p["model_info"]["n_train"] > 0
     p = client.post("/api/predict", json={"text": "delicious, love it, highly recommend this honey"}).json()
     assert p["sentiment"] == "pos" and p["topic"] is None
-    p = client.post("/api/predict", json={"text": "cà phê này rất dở và cũ"}).json()
-    assert p["note"]
+    r = client.post("/api/predict", json={"text": "cà phê này rất dở và cũ"})          # 1.5.0: không có từ nào mô hình đã học
+    assert r.status_code == 422 and r.json()["error"]["code"] == "TEXT_NOT_RECOGNIZED"
+    p = client.post("/api/predict", json={"text": "cà phê này rất dở và cũ, coffee stale"}).json()
+    assert p["note"] and p["known_token_ratio"] < 0.35                      # còn ít từ tiếng Anh: vẫn dự đoán nhưng có cảnh báo
     p = client.post("/api/predict", json={"text": "great-tasting,fresh,crunchy,salty,sweet,tasty,delicious crackers yes"}).json()
     assert 0 <= p["known_token_ratio"] <= 1                       # tỷ lệ từ đã biết không vượt 100%
     assert client.post("/api/predict", json={"text": "too short"}).json()["error"]["code"] == "TEXT_TOO_SHORT"
