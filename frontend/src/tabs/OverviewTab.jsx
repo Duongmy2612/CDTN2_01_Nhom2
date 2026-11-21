@@ -215,7 +215,11 @@ function Pipeline({ q }) {
     ['Nội dung < 3 từ sau khi bỏ HTML, URL', -(log.r7_too_short || 0), 'R6–R7'],
     ['Đánh giá sạch dùng để phân tích', log.n_clean, 'R8–R9'],
   ]
+  // buổi 8: các chỉnh sửa tự động không làm mất dòng nhưng người đọc cần biết (Time mili-giây, Id không hợp lệ/trùng)
+  const fixes = [log.r2_time_ms_converted ? 'cột Time ghi bằng mili-giây đã được đổi sang giây' : null,
+    log.id_renumbered ? 'cột Id không phải số hoặc bị trùng nên mã đánh giá được đánh số lại' : null].filter(Boolean)
   return (
+    <>
     <div className="grid md:grid-cols-6 gap-2">
       {steps.map(([label, v, rule], i) => (
         <div key={i} className={`rounded-lg px-3 py-2.5 ${i === 0 || i === steps.length - 1 ? 'bg-primarySoft' : 'bg-slate-50'}`}>
@@ -225,5 +229,7 @@ function Pipeline({ q }) {
         </div>
       ))}
     </div>
+    {fixes.length > 0 && <div className="mt-2 text-[12px] text-muted">Tự chỉnh khi làm sạch: {fixes.join('; ')}.</div>}
+    </>
   )
 }

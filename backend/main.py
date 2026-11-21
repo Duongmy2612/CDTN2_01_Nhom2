@@ -20,12 +20,15 @@ from backend.core.state import STATE  # noqa: E402
 from backend.routers import ai, analytics, forecast, model, predict, report, upload  # noqa: E402
 from backend.schemas.api import API_CONTRACT_VERSION, HealthResponse  # noqa: E402
 from backend.services import ai_service as AI  # noqa: E402
+from backend.services import eda_service as EDA  # noqa: E402
 from backend.services import pipeline as PL  # noqa: E402
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     STATE.load_from_disk()          # QĐ-02: kết quả phiên trước được nạp lại khi khởi động
+    if STATE.dataset_loaded:
+        EDA.keyword_index(STATE)    # buổi 8: nạp chỉ mục từ khóa đã lưu (≈ 0,03 giây) để lọc biểu đồ từ khóa ≤ 2 giây (NFR-02)
     yield
 
 
@@ -41,11 +44,26 @@ async def api_error_handler(_: Request, exc: ApiError):
     return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
 
 
+# buổi 8: thông điệp tiếng Việt cho các lỗi kiểm tra tham số hay gặp (trước đây hiện nguyên văn tiếng Anh của pydantic)
+_MONTH_FIELDS = {"date_from", "date_to", "month"}
+
+
+def _friendly(err: dict) -> str:
+    field = str(err.get("loc", [""])[-1])
+    if err.get("type") == "string_pattern_mismatch" and field in _MONTH_FIELDS:
+        return f"{field} phải có dạng yyyy-mm, tháng từ 01 đến 12 (nhận được “{err.get('input')}”)"
+    if err.get("type") == "string_too_long":
+        return f"{field} dài quá {err.get('ctx', {}).get('max_length')} ký tự"
+    if err.get("type") in ("missing", "string_too_short") and field == "text":
+        return "Chưa nhập nội dung đánh giá"
+    return f"{'.'.join(str(x) for x in err.get('loc', []))} – {err.get('msg', '')}"
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(_: Request, exc: RequestValidationError):
     first = exc.errors()[0] if exc.errors() else {}
     return JSONResponse(status_code=422, content={"error": {"code": "VALIDATION_ERROR",
-                        "message": f"Tham số không hợp lệ: {'.'.join(str(x) for x in first.get('loc', []))} – {first.get('msg', '')}",
+                        "message": f"Tham số không hợp lệ: {_friendly(first)}",
                         "details": {"errors": [{k: str(v) for k, v in e.items() if k in ('loc', 'msg', 'type')} for e in exc.errors()]}}})
 
 
