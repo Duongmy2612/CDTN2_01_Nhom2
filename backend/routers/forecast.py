@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query
 
 from backend.core.deps import require_data
 from backend.core.errors import ApiError
-from backend.schemas.api import ErrorResponse, ForecastResponse, SatisfactionResponse
+from backend.schemas.api import MONTH_PATTERN, ErrorResponse, ForecastResponse, SatisfactionResponse
 from backend.services import forecast_service as FS
 
 router = APIRouter(tags=["Dự báo"])
@@ -23,7 +23,7 @@ def _check_product(st, product_id):
 @router.get("/satisfaction", response_model=SatisfactionResponse, summary="Chỉ số hài lòng theo tháng (FR-19)",
             responses={404: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
 def satisfaction(product_id: Optional[str] = None,
-                 date_from: Optional[str] = Query(None, pattern=r"^\d{4}-\d{2}$"), date_to: Optional[str] = Query(None, pattern=r"^\d{4}-\d{2}$")):
+                 date_from: Optional[str] = Query(None, pattern=MONTH_PATTERN), date_to: Optional[str] = Query(None, pattern=MONTH_PATTERN)):
     st = require_data()
     return FS.satisfaction(st, _check_product(st, product_id), date_from, date_to)
 
