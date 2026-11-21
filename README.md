@@ -161,7 +161,7 @@ Hợp đồng API giữ nguyên 1.5.0 (không đổi API nào); bản 1.5.1 ch�
   (toàn bộ Reviews.csv đã xử lý – phiên bản dữ liệu `3f6b35ee`, mô hình, 48 kết quả Gemini ngày 07/11); không có `backend/.env`.
 - **Kiểm thử trên môi trường sạch** (21/11, Linux 2 CPU, Python 3.11, giải nén mới, `.venv` mới, không dùng bộ đệm pip): cài đặt
   25 – 104 giây ở 4 lần đo (phụ thuộc mạng, tải khoảng 140 MB thư viện), sẵn sàng sau 10 giây mỗi lần mở, ứng dụng dùng khoảng
-  0,74 GB RAM. Gọi qua đúng cổng 8000: chạy thử 27/27 API, kiểm tra tích hợp 17/17 chỉ số, kiểm thử chấp nhận 14/14 FR Must
+  0,75 GB RAM. Gọi qua đúng cổng 8000: chạy thử 27/27 API, kiểm tra tích hợp 17/17 chỉ số, kiểm thử chấp nhận 14/14 FR Must
   (job bộ mẫu 160,9 giây) – biên bản trong `docs/test_report/buoi9_dong_goi/`.
 - **Lỗi tìm được khi thử gói:** (1) tắt rồi mở lại ngay thì ứng dụng nhảy sang cổng 8001, 8002 vì bước chọn cổng coi cổng có kết nối
   cũ ở trạng thái TIME_WAIT là “bận” → bật `SO_REUSEADDR` giống uvicorn; (2) máy không có Internet thì trang tài liệu API `/docs`
