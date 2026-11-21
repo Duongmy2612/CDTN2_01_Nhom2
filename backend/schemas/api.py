@@ -15,6 +15,8 @@ API_CONTRACT_VERSION = "1.4.0"   # 1.1.0: chỉ bổ sung trường tùy chọn,
 # 1.3.0 (sprint XD1): prec_macro3, rec_macro3 (#11); complete, problem của giải pháp, n_calls, incomplete_actions (#17)
 # 1.4.0 (sprint XD2 – tích hợp): product_id, product của dự đoán (#14); n_unassigned của chủ đề (#13)
 
+MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"   # buổi 8 (B11): yyyy-mm, tháng 01–12 (trước đây nhận nhầm 2010-13)
+
 
 class BaseModel(_PydanticBase):
     """Lớp gốc: cho phép tên trường bắt đầu bằng model_ (model_ready, model_f1_macro)."""
@@ -41,8 +43,8 @@ class Meta(BaseModel):
 
 
 class Filters(BaseModel):
-    date_from: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}$", examples=["2011-01"])
-    date_to: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}$", examples=["2012-09"])
+    date_from: Optional[str] = Field(None, pattern=MONTH_PATTERN, examples=["2011-01"])
+    date_to: Optional[str] = Field(None, pattern=MONTH_PATTERN, examples=["2012-09"])
     product_id: Optional[str] = Field(None, examples=["B007JFMH8M"])
     sentiment: Optional[Sentiment] = None
     score: Optional[int] = Field(None, ge=1, le=5)
@@ -285,7 +287,7 @@ class TopicsResponse(BaseModel):
 
 
 class MonthPoint(BaseModel):
-    month: str = Field(..., pattern=r"^\d{4}-\d{2}$")
+    month: str = Field(..., pattern=MONTH_PATTERN)
     n: int
     avg_score: float
     neg_rate: float
