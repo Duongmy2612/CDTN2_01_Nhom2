@@ -10,7 +10,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.core import config as C
 
@@ -35,8 +37,22 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="FoodReview Insight API", version=API_CONTRACT_VERSION, lifespan=lifespan,
+              docs_url=None, redoc_url=None,      # /docs tự phục vụ bên dưới (không dùng CDN); bỏ /redoc (cũng tải từ CDN)
               description="Hợp đồng API của đề tài Phân tích & dự báo mức độ hài lòng của khách hàng "
                           "từ dữ liệu đánh giá thực phẩm trên Amazon (Chuyên đề tốt nghiệp 2 – ĐH Văn Lang).")
+
+# buổi 9 (v1.5.1): Swagger UI mặc định tải JS/CSS từ cdn.jsdelivr.net → máy demo không có mạng thì /docs trắng trang.
+# Dùng bản swagger-ui-dist 5.34.1 đóng kèm trong backend/static/swagger-ui (giấy phép Apache 2.0).
+SWAGGER_DIR = C.BASE_DIR / "static" / "swagger-ui"
+app.mount("/static/swagger-ui", StaticFiles(directory=SWAGGER_DIR), name="swagger-ui")
+
+
+@app.get("/docs", include_in_schema=False)
+def swagger_docs():
+    return get_swagger_ui_html(openapi_url=app.openapi_url, title=f"{app.title} – tài liệu API",
+                               swagger_js_url="/static/swagger-ui/swagger-ui-bundle.js",
+                               swagger_css_url="/static/swagger-ui/swagger-ui.css",
+                               swagger_favicon_url="/static/swagger-ui/favicon-32x32.png")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"],
                    allow_headers=["*"], expose_headers=["Content-Disposition"])
 

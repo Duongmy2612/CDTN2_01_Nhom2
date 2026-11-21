@@ -93,3 +93,19 @@ def test_launcher_picks_next_free_port():
         conn.close()                      # máy chủ đóng trước → kết nối nằm ở TIME_WAIT phía máy chủ
         cli.close()
     assert run_app.free_port("127.0.0.1", port2) == port2
+
+
+def test_docs_page_works_offline():
+    """/docs không tải gì từ Internet (trước 1.5.1: JS/CSS lấy từ cdn.jsdelivr.net → máy demo mất mạng thì trắng trang)."""
+    import re
+
+    from backend.main import app
+    from backend.schemas.api import API_CONTRACT_VERSION
+    c = TestClient(app)
+    html = c.get("/docs").text
+    assert "/static/swagger-ui/swagger-ui-bundle.js" in html and "/static/swagger-ui/swagger-ui.css" in html
+    assert not re.search(r"(src|href)=['\"]https?://", html), "trang /docs còn tải tài nguyên từ Internet"
+    js = c.get("/static/swagger-ui/swagger-ui-bundle.js")
+    assert js.status_code == 200 and len(js.content) > 1_000_000
+    assert c.get("/static/swagger-ui/swagger-ui.css").status_code == 200
+    assert c.get("/openapi.json").json()["info"]["version"] == API_CONTRACT_VERSION
